@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-slate-950 text-slate-100;
+  margin: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* iPhone のセーフエリア対応（ホーム画面追加時の下部） */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}

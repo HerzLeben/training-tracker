@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./node_modules/.bin/esbuild scripts/verify-logic.ts --bundle --platform=node --format=esm --outfile=/tmp/verify-logic.mjs --log-level=warning)",
+      "Bash(node /tmp/verify-logic.mjs)"
+    ]
+  }
+}
