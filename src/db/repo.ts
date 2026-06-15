@@ -1,22 +1,29 @@
 import { db } from './db'
-import type { Exercise, Settings, DailyMenu, BodyMetric, GoalType, Slot } from '../types'
+import type { Exercise, Settings, DailyMenu, BodyMetric } from '../types'
 import { DEFAULT_EXERCISES } from '../data/exerciseCatalog'
-import { defaultSplitPattern } from '../engine/split'
+import { splitForFrequency, clampFreq } from '../engine/split'
 
-const DEFAULT_REST_WEEKDAY = 0 // 日曜
+const DEFAULT_FREQUENCY = 6
 
 export const defaultSettings = (): Settings => ({
   id: 'app',
-  goalType: 'maintain',
-  restWeekday: DEFAULT_REST_WEEKDAY,
-  splitPattern: defaultSplitPattern(DEFAULT_REST_WEEKDAY),
+  weeklyFrequency: DEFAULT_FREQUENCY,
+  targetBodyFatPct: undefined,
+  targetMuscleKg: undefined,
+  splitPattern: splitForFrequency(DEFAULT_FREQUENCY),
 })
 
-/** 初回起動時に設定・種目カタログを投入する（冪等）。 */
+/** 初回起動時に設定・種目カタログを投入する（冪等）。古い設定は移行する。 */
 export async function ensureSeeded(): Promise<void> {
   await db.transaction('rw', db.settings, db.exercises, async () => {
     const s = await db.settings.get('app')
-    if (!s) await db.settings.put(defaultSettings())
+    // weeklyFrequency が無い = 旧スキーマ → 既定で作り直す（目標値があれば引き継ぐ）。
+    if (!s || s.weeklyFrequency === undefined) {
+      const carried: Partial<Settings> = s
+        ? { targetBodyFatPct: s.targetBodyFatPct, targetMuscleKg: s.targetMuscleKg }
+        : {}
+      await db.settings.put({ ...defaultSettings(), ...carried })
+    }
     const count = await db.exercises.count()
     if (count === 0) await db.exercises.bulkPut(DEFAULT_EXERCISES)
   })
@@ -32,17 +39,18 @@ export async function updateSettings(patch: Partial<Settings>): Promise<void> {
   await db.settings.put({ ...cur, ...patch, id: 'app' })
 }
 
-export async function setGoalType(goalType: GoalType): Promise<void> {
-  await updateSettings({ goalType })
+/** 週の回数を変更し、分割パターンも組み直す。 */
+export async function setFrequency(freq: number): Promise<void> {
+  const f = clampFreq(freq)
+  await updateSettings({ weeklyFrequency: f, splitPattern: splitForFrequency(f) })
 }
 
-/** 休養日を変更し、分割パターンも既定で組み直す。 */
-export async function setRestWeekday(restWeekday: number): Promise<void> {
-  await updateSettings({ restWeekday, splitPattern: defaultSplitPattern(restWeekday) })
-}
-
-export async function setSplitPattern(splitPattern: Slot[]): Promise<void> {
-  await updateSettings({ splitPattern })
+/** 目標体脂肪率・目標筋肉量を設定（undefined で未設定に戻す）。 */
+export async function setTargets(patch: {
+  targetBodyFatPct?: number
+  targetMuscleKg?: number
+}): Promise<void> {
+  await updateSettings(patch)
 }
 
 // --- 種目カタログ ---
@@ -50,9 +58,8 @@ export async function listExercises(): Promise<Exercise[]> {
   return db.exercises.toArray()
 }
 
-export async function enabledExercisesBySlot(slot: Exclude<Slot, 'rest'>): Promise<Exercise[]> {
-  const all = await db.exercises.where('slot').equals(slot).toArray()
-  return all.filter((e) => e.enabled)
+export async function listEnabledExercises(): Promise<Exercise[]> {
+  return (await db.exercises.toArray()).filter((e) => e.enabled)
 }
 
 export async function upsertExercise(ex: Exercise): Promise<void> {

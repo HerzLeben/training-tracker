@@ -84,8 +84,9 @@ export async function exportMenusCSV(): Promise<void> {
 /** 体組成を CSV 化。 */
 export async function exportMetricsCSV(): Promise<void> {
   const metrics = await db.metrics.orderBy('date').toArray()
-  const rows = [['date', 'weightKg', 'bodyFatPct']]
-  for (const m of metrics) rows.push([m.date, csvCell(m.weightKg), csvCell(m.bodyFatPct)])
+  const rows = [['date', 'weightKg', 'bodyFatPct', 'muscleKg']]
+  for (const m of metrics)
+    rows.push([m.date, csvCell(m.weightKg), csvCell(m.bodyFatPct), csvCell(m.muscleKg)])
   const csv = rows.map((r) => r.map(csvCell).join(',')).join('\n')
   download(`body-metrics-${stamp()}.csv`, csv, 'text/csv')
 }

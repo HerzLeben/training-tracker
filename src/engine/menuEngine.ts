@@ -1,38 +1,79 @@
-import type { DailyMenu, Exercise, GoalType, MenuItem, Settings, Slot } from '../types'
-import { slotForDate } from './split'
-import { getMenu, putMenu, enabledExercisesBySlot, listMenus } from '../db/repo'
+import type { BodyMetric, Category, DailyMenu, Exercise, GoalType, MenuItem, Settings } from '../types'
+import { slotForDate, categoriesForSlot } from './split'
+import { getMenu, putMenu, listMenus, listEnabledExercises, listMetrics } from '../db/repo'
+import { getSettings } from '../db/repo'
 import { diffDays } from '../lib/date'
 
-// ルールベースのメニュー生成。
-// 入力 = 目標タイプ・直近の達成状況・部位（種目）ローテ。
-// ※今回は前回重量・レップによる漸進性過負荷は対象外（チェックのみ）。
+// 動的なメニュー生成。
+// 入力 = 週の頻度（→スロット）・目標体脂肪/筋肉量と現在値の差（→方針）・直近達成（→微調整）。
+// 制約 = 筋トレ部分が約30分に収まる種目数/セット数にする。
+// ※今回も記録はチェックのみ（重量・レップは扱わない）。
+
+const SESSION_BUDGET_MIN = 30 // 筋トレ部分の目安（分）
 
 interface Scheme {
-  baseCount: number // 基本の種目数
   sets: number
   reps: string
+  /** 1種目あたりの目安所要（分）。セット数と休息で概算。 */
+  perExerciseMin: number
 }
 
 function schemeFor(goal: GoalType): Scheme {
   switch (goal) {
     case 'bulk':
-      return { baseCount: 4, sets: 4, reps: '8-12' }
+      // 高重量・長め休息。1種目 ≈ 4セット → 約9分。
+      return { sets: 4, reps: '8-12', perExerciseMin: 9 }
     case 'cut':
-      return { baseCount: 4, sets: 3, reps: '12-15' }
+      // 高回数・短め休息で種目数を確保。1種目 ≈ 3セット → 約7分。
+      return { sets: 3, reps: '12-15', perExerciseMin: 7 }
     case 'maintain':
     default:
-      return { baseCount: 3, sets: 3, reps: '10' }
+      return { sets: 3, reps: '10', perExerciseMin: 7 }
   }
 }
 
-const REST_NOTE = '今日は休養日です。睡眠と栄養で回復を。軽いストレッチや有酸素は任意。'
+const REST_NOTE = '今日は休養日です。睡眠と栄養で回復を。'
 
-/** 直近の達成率に応じたボリューム調整量（種目数・セット数の増減）。 */
-function volumeDelta(recentAdherence: number | null): number {
-  if (recentAdherence === null) return 0
-  if (recentAdherence < 0.6) return -1 // 続かない → 取り組みやすく減らす
-  if (recentAdherence >= 0.9) return 1 // 安定 → 少し増やす
-  return 0
+const EMPHASIS_LABEL: Record<GoalType, string> = {
+  cut: '減量寄り',
+  bulk: '筋肥大寄り',
+  maintain: '維持',
+}
+
+export function emphasisLabel(g: GoalType): string {
+  return EMPHASIS_LABEL[g]
+}
+
+/** 体組成の最新値（項目ごとに最も新しい記録）を取り出す。 */
+export function latestBody(metrics: BodyMetric[]): { fat?: number; muscle?: number } {
+  const sorted = [...metrics].sort((a, b) => b.date.localeCompare(a.date))
+  const fat = sorted.find((m) => m.bodyFatPct !== undefined)?.bodyFatPct
+  const muscle = sorted.find((m) => m.muscleKg !== undefined)?.muscleKg
+  return { fat, muscle }
+}
+
+/**
+ * 目標体脂肪率・目標筋肉量と現在値の差から方針を自動判定。
+ * データ不足なら 'maintain'。
+ */
+export function deriveEmphasis(latest: { fat?: number; muscle?: number }, settings: Settings): GoalType {
+  const fatGap =
+    latest.fat !== undefined && settings.targetBodyFatPct !== undefined
+      ? latest.fat - settings.targetBodyFatPct // >0: 体脂肪を減らす必要
+      : null
+  const muscleGap =
+    latest.muscle !== undefined && settings.targetMuscleKg !== undefined
+      ? settings.targetMuscleKg - latest.muscle // >0: 筋肉を増やす必要
+      : null
+
+  const fatScore = fatGap !== null && fatGap > 0 ? fatGap : 0
+  const muscleScore = muscleGap !== null && muscleGap > 0 ? muscleGap : 0
+  if (fatScore === 0 && muscleScore === 0) return 'maintain'
+
+  // 正規化（体脂肪 2% ≒ 筋肉 1kg を同程度の重みとして比較）。
+  const fatNorm = fatScore / 2
+  const muscleNorm = muscleScore / 1
+  return fatNorm >= muscleNorm ? 'cut' : 'bulk'
 }
 
 /** 直近 N 日（item を持つメニュー）の平均達成率。なければ null。 */
@@ -46,36 +87,38 @@ function computeRecentAdherence(history: DailyMenu[], date: string, days = 7): n
   return ratios.reduce((a, b) => a + b, 0) / ratios.length
 }
 
-/**
- * スロット対象の種目から count 件を、ローテーション offset を使って選ぶ。
- * 直近の同スロットと同じ顔ぶれになりそうなら 1 周ずらす。
- */
-function pickExercises(
-  pool: Exercise[],
-  count: number,
-  rotationIndex: number,
-  lastIds: string[],
-): Exercise[] {
-  if (pool.length === 0) return []
-  const sorted = [...pool].sort((a, b) => a.id.localeCompare(b.id))
-  const n = sorted.length
-  const take = Math.min(count, n)
+function volumeDelta(recentAdherence: number | null): number {
+  if (recentAdherence === null) return 0
+  if (recentAdherence < 0.6) return -1
+  if (recentAdherence >= 0.9) return 1
+  return 0
+}
 
+/** カテゴリ群の有効種目をラウンドロビンで一列に並べる（部位バランス確保）。 */
+function balancedPool(cats: Category[], byCat: Record<Category, Exercise[]>): Exercise[] {
+  const lists = cats.map((c) => [...(byCat[c] ?? [])].sort((a, b) => a.id.localeCompare(b.id)))
+  const out: Exercise[] = []
+  const maxLen = Math.max(0, ...lists.map((l) => l.length))
+  for (let i = 0; i < maxLen; i++) {
+    for (const l of lists) if (i < l.length) out.push(l[i])
+  }
+  return out
+}
+
+/** ローテ offset を使い、直近と同一顔ぶれを避けて count 件選ぶ。 */
+function rotateSelect(pool: Exercise[], count: number, rotationIndex: number, lastIds: string[]): Exercise[] {
+  if (pool.length === 0) return []
+  const n = pool.length
+  const take = Math.min(count, n)
   const select = (offset: number): Exercise[] => {
     const out: Exercise[] = []
-    for (let i = 0; i < take; i++) out.push(sorted[(offset + i) % n])
+    for (let i = 0; i < take; i++) out.push(pool[(offset + i) % n])
     return out
   }
-
-  let offset = ((rotationIndex * take) % n + n) % n
+  let offset = (((rotationIndex * take) % n) + n) % n
   let chosen = select(offset)
-  // 直近と完全一致し、かつ他に選択肢があるならずらす。
-  const sameAsLast =
-    lastIds.length === chosen.length && chosen.every((e) => lastIds.includes(e.id))
-  if (sameAsLast && n > take) {
-    offset = (offset + take) % n
-    chosen = select(offset)
-  }
+  const sameAsLast = lastIds.length === chosen.length && chosen.every((e) => lastIds.includes(e.id))
+  if (sameAsLast && n > take) chosen = select((offset + take) % n)
   return chosen
 }
 
@@ -83,80 +126,90 @@ function pickExercises(
 export function buildMenu(params: {
   date: string
   settings: Settings
-  slotPool: Exercise[]
+  exercisesByCat: Record<Category, Exercise[]>
+  emphasis: GoalType
   priorSameSlotCount: number
   lastSameSlotIds: string[]
   recentAdherence: number | null
 }): DailyMenu {
-  const { date, settings, slotPool, priorSameSlotCount, lastSameSlotIds, recentAdherence } = params
-  const slot: Slot = slotForDate(date, settings.splitPattern)
+  const { date, settings, exercisesByCat, emphasis, priorSameSlotCount, lastSameSlotIds, recentAdherence } = params
+  const slot = slotForDate(date, settings.splitPattern)
 
   if (slot === 'rest') {
-    return { date, slot, items: [], note: REST_NOTE, generatedAt: stamp() }
+    return { date, slot, items: [], note: REST_NOTE, emphasis, estMinutes: 0, generatedAt: stamp() }
   }
 
-  const scheme = schemeFor(settings.goalType)
-  const delta = volumeDelta(recentAdherence)
-  const count = Math.max(2, scheme.baseCount + delta)
-  const sets = Math.max(2, scheme.sets + delta)
+  const scheme = schemeFor(emphasis)
+  // 30分枠に収まる種目数を算出し、直近達成で ±1 微調整。
+  const budgetCount = Math.floor(SESSION_BUDGET_MIN / scheme.perExerciseMin)
+  const count = Math.max(2, budgetCount + volumeDelta(recentAdherence))
 
-  const chosen = pickExercises(slotPool, count, priorSameSlotCount, lastSameSlotIds)
+  const pool = balancedPool(categoriesForSlot(slot), exercisesByCat)
+  const chosen = rotateSelect(pool, count, priorSameSlotCount, lastSameSlotIds)
+
   const items: MenuItem[] = chosen.map((e) => ({
     exerciseId: e.id,
     name: e.name,
     muscle: e.muscle,
-    targetSets: sets,
+    targetSets: scheme.sets,
     targetReps: scheme.reps,
     done: false,
   }))
-  return { date, slot, items, generatedAt: stamp() }
+  return {
+    date,
+    slot,
+    items,
+    emphasis,
+    estMinutes: items.length * scheme.perExerciseMin,
+    generatedAt: stamp(),
+  }
 }
 
-// generatedAt 用。テスト容易性のため分離。
 function stamp(): number {
   return Date.now()
 }
 
+function groupByCat(exercises: Exercise[]): Record<Category, Exercise[]> {
+  const out: Record<Category, Exercise[]> = { push: [], pull: [], legs: [] }
+  for (const e of exercises) out[e.slot].push(e)
+  return out
+}
+
 /**
  * 指定日のメニューを取得。無ければ生成して保存する。
- * regenerate=true で既存を破棄して作り直す（チェックはリセット）。
+ * regenerate=true で作り直す（チェックはリセット）。
  */
 export async function ensureMenuForDate(
   date: string,
-  settings: Settings,
+  settings?: Settings,
   regenerate = false,
 ): Promise<DailyMenu> {
   const existing = await getMenu(date)
   if (existing && !regenerate) return existing
 
-  const slot = slotForDate(date, settings.splitPattern)
-  const history = await listMenus()
+  const cfg = settings ?? (await getSettings())
+  const slot = slotForDate(date, cfg.splitPattern)
+  const [history, metrics, enabled] = await Promise.all([
+    listMenus(),
+    listMetrics(),
+    listEnabledExercises(),
+  ])
+  const emphasis = deriveEmphasis(latestBody(metrics), cfg)
 
-  let menu: DailyMenu
-  if (slot === 'rest') {
-    menu = buildMenu({
-      date,
-      settings,
-      slotPool: [],
-      priorSameSlotCount: 0,
-      lastSameSlotIds: [],
-      recentAdherence: null,
-    })
-  } else {
-    const pool = await enabledExercisesBySlot(slot)
-    const sameSlotBefore = history
-      .filter((m) => m.slot === slot && m.date < date)
-      .sort((a, b) => a.date.localeCompare(b.date))
-    const last = sameSlotBefore[sameSlotBefore.length - 1]
-    menu = buildMenu({
-      date,
-      settings,
-      slotPool: pool,
-      priorSameSlotCount: sameSlotBefore.length,
-      lastSameSlotIds: last ? last.items.map((i) => i.exerciseId) : [],
-      recentAdherence: computeRecentAdherence(history, date),
-    })
-  }
+  const sameSlotBefore = history
+    .filter((m) => m.slot === slot && m.date < date)
+    .sort((a, b) => a.date.localeCompare(b.date))
+  const last = sameSlotBefore[sameSlotBefore.length - 1]
+
+  const menu = buildMenu({
+    date,
+    settings: cfg,
+    exercisesByCat: groupByCat(enabled),
+    emphasis,
+    priorSameSlotCount: sameSlotBefore.length,
+    lastSameSlotIds: last ? last.items.map((i) => i.exerciseId) : [],
+    recentAdherence: slot === 'rest' ? null : computeRecentAdherence(history, date),
+  })
 
   await putMenu(menu)
   return menu

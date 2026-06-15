@@ -2,15 +2,15 @@ import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/db'
 import { upsertExercise, deleteExercise } from '../db/repo'
-import type { Exercise, Slot } from '../types'
+import type { Category, Exercise } from '../types'
 import { SLOT_LABEL } from '../lib/labels'
 
-const SLOTS: Exclude<Slot, 'rest'>[] = ['push', 'pull', 'legs']
+const SLOTS: Category[] = ['push', 'pull', 'legs']
 
 export default function ExerciseManager() {
   const exercises = useLiveQuery(() => db.exercises.toArray(), [])
   const [name, setName] = useState('')
-  const [slot, setSlot] = useState<Exclude<Slot, 'rest'>>('push')
+  const [slot, setSlot] = useState<Category>('push')
   const [muscle, setMuscle] = useState('')
 
   const add = async (e: React.FormEvent) => {
@@ -73,7 +73,7 @@ export default function ExerciseManager() {
           className={`w-full ${field}`}
         />
         <div className="grid grid-cols-2 gap-2">
-          <select value={slot} onChange={(e) => setSlot(e.target.value as Exclude<Slot, 'rest'>)} className={field}>
+          <select value={slot} onChange={(e) => setSlot(e.target.value as Category)} className={field}>
             {SLOTS.map((s) => (
               <option key={s} value={s}>
                 {SLOT_LABEL[s]}

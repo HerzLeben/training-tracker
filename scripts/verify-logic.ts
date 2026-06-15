@@ -1,8 +1,9 @@
-// 純粋ロジック（分割・メニュー組立・集計）の簡易検証。Node 25 の型ストリップで直接実行。
-import { defaultSplitPattern, slotForDate } from '../src/engine/split.ts'
-import { buildMenu } from '../src/engine/menuEngine.ts'
+// 純粋ロジック（分割・方針判定・メニュー組立・集計）の簡易検証。
+// Node 25 の型ストリップ前提だが、拡張子なし import 解決のため esbuild でバンドルして実行する。
+import { splitForFrequency, slotForDate, categoriesForSlot } from '../src/engine/split.ts'
+import { buildMenu, deriveEmphasis, latestBody } from '../src/engine/menuEngine.ts'
 import { currentStreak, weekCalendar, completion } from '../src/lib/adherence.ts'
-import type { DailyMenu, Exercise, Settings } from '../src/types/index.ts'
+import type { Category, DailyMenu, Exercise, Settings } from '../src/types/index.ts'
 
 let pass = 0
 let fail = 0
@@ -11,72 +12,99 @@ function check(name: string, cond: boolean) {
   else { fail++; console.error(`FAIL  ${name}`) }
 }
 
-// --- 分割: 日曜休みで Mon..Sat に push/pull/legs ×2 ---
-const pat = defaultSplitPattern(0)
-check('日曜が休養', pat[0] === 'rest')
-check('月=push', pat[1] === 'push')
-check('火=pull', pat[2] === 'pull')
-check('水=legs', pat[3] === 'legs')
-check('木=push', pat[4] === 'push')
-check('土=legs', pat[6] === 'legs')
-check('休養は1日だけ', pat.filter((s) => s === 'rest').length === 1)
+// --- 分割: 週の回数 → パターン ---
+const p6 = splitForFrequency(6)
+check('freq6: 日曜休養', p6[0] === 'rest')
+check('freq6: 月=push', p6[1] === 'push')
+check('freq6: 土=legs', p6[6] === 'legs')
+check('freq6: 休養1日', p6.filter((s) => s === 'rest').length === 1)
 
-// 2025-06-15 は日曜
-check('2025-06-15は休養(日)', slotForDate('2025-06-15', pat) === 'rest')
-check('2025-06-16はpush(月)', slotForDate('2025-06-16', pat) === 'push')
+const p3 = splitForFrequency(3)
+check('freq3: 月水金がfull', p3[1] === 'full' && p3[3] === 'full' && p3[5] === 'full')
+check('freq3: 休養4日', p3.filter((s) => s === 'rest').length === 4)
 
-const settings: Settings = { id: 'app', goalType: 'bulk', restWeekday: 0, splitPattern: pat }
+const p4 = splitForFrequency(4)
+check('freq4: 月=upper, 火=lower', p4[1] === 'upper' && p4[2] === 'lower')
 
-// --- メニュー組立 ---
-const pushPool: Exercise[] = [
-  { id: 'a', name: 'A', slot: 'push', muscle: '胸', isCustom: false, enabled: true },
-  { id: 'b', name: 'B', slot: 'push', muscle: '肩', isCustom: false, enabled: true },
-  { id: 'c', name: 'C', slot: 'push', muscle: '三頭', isCustom: false, enabled: true },
-  { id: 'd', name: 'D', slot: 'push', muscle: '胸', isCustom: false, enabled: true },
-  { id: 'e', name: 'E', slot: 'push', muscle: '肩', isCustom: false, enabled: true },
-]
+check('clamp: freq8→6相当', splitForFrequency(8).filter((s) => s !== 'rest').length === 6)
+check('categoriesForSlot(full)=3カテゴリ', categoriesForSlot('full').length === 3)
+check('categoriesForSlot(upper)=push,pull', JSON.stringify(categoriesForSlot('upper')) === JSON.stringify(['push', 'pull']))
 
-// bulk(baseCount=4) かつ達成率null → 4種目
-const m1 = buildMenu({ date: '2025-06-16', settings, slotPool: pushPool, priorSameSlotCount: 0, lastSameSlotIds: [], recentAdherence: null })
-check('bulkは4種目', m1.items.length === 4)
-check('bulkは4セット', m1.items[0].targetSets === 4)
-check('レップ帯8-12', m1.items[0].targetReps === '8-12')
+// 2025-06-16 は月曜
+check('freq6 月曜はpush', slotForDate('2025-06-16', p6) === 'push')
 
-// 直近達成率が低い → 1種目減
-const mLow = buildMenu({ date: '2025-06-16', settings, slotPool: pushPool, priorSameSlotCount: 0, lastSameSlotIds: [], recentAdherence: 0.4 })
-check('低達成で種目減(3)', mLow.items.length === 3)
+// --- 方針の自動判定 ---
+const baseSettings = (over: Partial<Settings> = {}): Settings => ({
+  id: 'app', weeklyFrequency: 6, splitPattern: p6, ...over,
+})
+check('目標なし→maintain', deriveEmphasis({ fat: 20, muscle: 30 }, baseSettings()) === 'maintain')
+check('体脂肪が目標超→cut', deriveEmphasis({ fat: 25, muscle: 33 }, baseSettings({ targetBodyFatPct: 15, targetMuscleKg: 33 })) === 'cut')
+check('筋肉が目標未満→bulk', deriveEmphasis({ fat: 15, muscle: 28 }, baseSettings({ targetBodyFatPct: 15, targetMuscleKg: 33 })) === 'bulk')
+check('目標達成済→maintain', deriveEmphasis({ fat: 14, muscle: 34 }, baseSettings({ targetBodyFatPct: 15, targetMuscleKg: 33 })) === 'maintain')
 
-// 直近達成率が高い → 1種目増(5)
-const mHigh = buildMenu({ date: '2025-06-16', settings, slotPool: pushPool, priorSameSlotCount: 0, lastSameSlotIds: [], recentAdherence: 0.95 })
-check('高達成で種目増(5)', mHigh.items.length === 5)
+check('latestBodyは項目ごと最新', (() => {
+  const ms = [
+    { date: '2025-06-10', bodyFatPct: 20 },
+    { date: '2025-06-12', muscleKg: 30 },
+    { date: '2025-06-14', bodyFatPct: 18 },
+  ]
+  const l = latestBody(ms)
+  return l.fat === 18 && l.muscle === 30
+})())
 
-// ローテ: priorSameSlotCount を変えると顔ぶれがずれる
-const r0 = buildMenu({ date: '2025-06-16', settings, slotPool: pushPool, priorSameSlotCount: 0, lastSameSlotIds: [], recentAdherence: null }).items.map((i) => i.exerciseId).join(',')
-const r1 = buildMenu({ date: '2025-06-19', settings, slotPool: pushPool, priorSameSlotCount: 1, lastSameSlotIds: [], recentAdherence: null }).items.map((i) => i.exerciseId).join(',')
-check('ローテで顔ぶれが変化', r0 !== r1)
+// --- メニュー組立 + 30分予算 ---
+const mkEx = (id: string, cat: Category): Exercise => ({ id, name: id.toUpperCase(), slot: cat, muscle: 'm', isCustom: false, enabled: true })
+const byCat: Record<Category, Exercise[]> = {
+  push: ['a', 'b', 'c', 'd', 'e'].map((x) => mkEx('p' + x, 'push')),
+  pull: ['a', 'b', 'c', 'd', 'e'].map((x) => mkEx('l' + x, 'pull')),
+  legs: ['a', 'b', 'c', 'd', 'e'].map((x) => mkEx('g' + x, 'legs')),
+}
+const args = (over: Record<string, unknown> = {}) => ({
+  date: '2025-06-16', settings: baseSettings(), exercisesByCat: byCat,
+  emphasis: 'maintain' as const, priorSameSlotCount: 0, lastSameSlotIds: [], recentAdherence: null, ...over,
+})
 
-// rest 日は種目なし＋note
-const mRest = buildMenu({ date: '2025-06-15', settings, slotPool: [], priorSameSlotCount: 0, lastSameSlotIds: [], recentAdherence: null })
-check('休養は種目0', mRest.items.length === 0 && mRest.slot === 'rest' && !!mRest.note)
+const bulk = buildMenu(args({ emphasis: 'bulk' }) as never)
+check('bulkは30分で3種目', bulk.items.length === 3)
+check('bulkは4セット', bulk.items[0].targetSets === 4)
+check('bulkのest≈27分', bulk.estMinutes === 27)
 
-// --- 集計: ストリーク/カレンダー ---
+const cut = buildMenu(args({ emphasis: 'cut' }) as never)
+check('cutは30分で4種目', cut.items.length === 4)
+check('cutのレップ12-15', cut.items[0].targetReps === '12-15')
+
+const low = buildMenu(args({ emphasis: 'cut', recentAdherence: 0.4 }) as never)
+check('低達成で1種目減(3)', low.items.length === 3)
+
+// ローテで顔ぶれが変わる
+const r0 = buildMenu(args({ emphasis: 'bulk', priorSameSlotCount: 0 }) as never).items.map((i) => i.exerciseId).join(',')
+const r1 = buildMenu(args({ emphasis: 'bulk', priorSameSlotCount: 1 }) as never).items.map((i) => i.exerciseId).join(',')
+check('ローテで顔ぶれ変化', r0 !== r1)
+
+// full スロットは複数カテゴリから採用
+const full = buildMenu(args({ date: '2025-06-16', settings: baseSettings({ weeklyFrequency: 3, splitPattern: p3 }) }) as never)
+const cats = new Set(full.items.map((i) => i.exerciseId[0])) // p/l/g
+check('fullは複数部位から採用', full.slot === 'full' && cats.size >= 2)
+
+// rest 日
+const rest = buildMenu(args({ date: '2025-06-15' }) as never)
+check('休養は種目0+note', rest.slot === 'rest' && rest.items.length === 0 && !!rest.note)
+
+// --- 集計 ---
+const settings = baseSettings()
 const mk = (date: string, doneCount: number, total: number): DailyMenu => ({
   date, slot: 'push', generatedAt: 0,
   items: Array.from({ length: total }, (_, i) => ({
     exerciseId: `x${i}`, name: 'x', muscle: 'm', targetSets: 3, targetReps: '10', done: i < doneCount,
   })),
 })
-
-// 木金土(2025-06-12,13,14)達成、日(15)は休養 → today=月16未達(未確定)
 const menus: DailyMenu[] = [mk('2025-06-12', 4, 4), mk('2025-06-13', 4, 4), mk('2025-06-14', 4, 4)]
-const streak = currentStreak(menus, settings, '2025-06-16')
-check('ストリークは3(休養を跨ぐ・当日未確定)', streak === 3)
-
-check('completionは0.5', completion(mk('x', 2, 4)) === 0.5)
+check('ストリーク3(休養跨ぎ・当日未確定)', currentStreak(menus, settings, '2025-06-16') === 3)
+check('completion=0.5', completion(mk('x', 2, 4)) === 0.5)
 const cal = weekCalendar(menus, settings, 7, '2025-06-16')
-check('週カレンダーは7日', cal.length === 7)
-check('日曜セルはrest', cal.find((c) => c.date === '2025-06-15')?.status === 'rest')
-check('木曜セルはdone', cal.find((c) => c.date === '2025-06-12')?.status === 'done')
+check('週カレンダー7日', cal.length === 7)
+check('日曜rest', cal.find((c) => c.date === '2025-06-15')?.status === 'rest')
+check('木曜done', cal.find((c) => c.date === '2025-06-12')?.status === 'done')
 
 console.log(`\n${pass} passed, ${fail} failed`)
 process.exit(fail === 0 ? 0 : 1)

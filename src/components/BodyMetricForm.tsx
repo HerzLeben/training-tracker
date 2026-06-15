@@ -6,20 +6,23 @@ export default function BodyMetricForm() {
   const [date, setDate] = useState(todayISO())
   const [weight, setWeight] = useState('')
   const [fat, setFat] = useState('')
+  const [muscle, setMuscle] = useState('')
   const [msg, setMsg] = useState('')
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
     const weightKg = weight === '' ? undefined : Number(weight)
     const bodyFatPct = fat === '' ? undefined : Number(fat)
-    if (weightKg === undefined && bodyFatPct === undefined) {
-      setMsg('体重か体脂肪のどちらかを入力してください。')
+    const muscleKg = muscle === '' ? undefined : Number(muscle)
+    if (weightKg === undefined && bodyFatPct === undefined && muscleKg === undefined) {
+      setMsg('いずれかの項目を入力してください。')
       return
     }
-    await upsertMetric({ date, weightKg, bodyFatPct })
+    await upsertMetric({ date, weightKg, bodyFatPct, muscleKg })
     setMsg('保存しました。')
     setWeight('')
     setFat('')
+    setMuscle('')
     setTimeout(() => setMsg(''), 2000)
   }
 
@@ -56,6 +59,18 @@ export default function BodyMetricForm() {
             className={field}
           />
         </div>
+      </div>
+      <div>
+        <label className="mb-1 block text-xs text-slate-400">筋肉量 (kg)</label>
+        <input
+          type="number"
+          inputMode="decimal"
+          step="0.1"
+          value={muscle}
+          onChange={(e) => setMuscle(e.target.value)}
+          placeholder="例 32.5"
+          className={field}
+        />
       </div>
       <button className="w-full rounded-xl bg-sky-600 py-2 font-medium active:bg-sky-700">
         記録する

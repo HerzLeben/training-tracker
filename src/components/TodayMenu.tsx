@@ -1,6 +1,7 @@
 import type { DailyMenu } from '../types'
 import { completion } from '../lib/adherence'
 import { SLOT_LABEL } from '../lib/labels'
+import { emphasisLabel } from '../engine/menuEngine'
 import MenuItemRow from './MenuItemRow'
 
 interface Props {
@@ -29,6 +30,14 @@ export default function TodayMenu({ menu, onToggle, onRegenerate }: Props) {
         <div>
           <div className="text-sm text-slate-400">本日のメニュー</div>
           <h2 className="text-lg font-semibold">{SLOT_LABEL[menu.slot]}</h2>
+          <div className="mt-0.5 text-xs text-slate-400">
+            {menu.emphasis && (
+              <span className="mr-2 rounded bg-slate-800 px-1.5 py-0.5 text-sky-300">
+                方針: {emphasisLabel(menu.emphasis)}
+              </span>
+            )}
+            {menu.estMinutes ? <span>筋トレ目安 約{menu.estMinutes}分</span> : null}
+          </div>
         </div>
         <div className="text-right">
           <div className="text-2xl font-bold text-sky-400">

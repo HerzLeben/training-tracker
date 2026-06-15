@@ -8,7 +8,12 @@ interface Props {
 export default function BodyTrendChart({ metrics }: Props) {
   const data = [...metrics]
     .sort((a, b) => a.date.localeCompare(b.date))
-    .map((m) => ({ label: m.date.slice(5), weight: m.weightKg ?? null, fat: m.bodyFatPct ?? null }))
+    .map((m) => ({
+      label: m.date.slice(5),
+      weight: m.weightKg ?? null,
+      fat: m.bodyFatPct ?? null,
+      muscle: m.muscleKg ?? null,
+    }))
 
   if (data.length === 0) {
     return (
@@ -37,6 +42,16 @@ export default function BodyTrendChart({ metrics }: Props) {
             dataKey="weight"
             name="体重(kg)"
             stroke="#38bdf8"
+            strokeWidth={2}
+            connectNulls
+            dot={{ r: 2 }}
+          />
+          <Line
+            yAxisId="w"
+            type="monotone"
+            dataKey="muscle"
+            name="筋肉量(kg)"
+            stroke="#34d399"
             strokeWidth={2}
             connectNulls
             dot={{ r: 2 }}
