@@ -18,7 +18,14 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* iPhone のセーフエリア対応（ホーム画面追加時の下部） */
+/* iPhone のセーフエリア対応（ホーム画面追加時） */
 .safe-bottom {
   padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* 上端: ステータスバー/ノッチ分を空ける。左右もノッチ（横向き）に配慮。 */
+.safe-top {
+  padding-top: calc(env(safe-area-inset-top) + 1rem);
+  padding-left: calc(env(safe-area-inset-left) + 1rem);
+  padding-right: calc(env(safe-area-inset-right) + 1rem);
 }

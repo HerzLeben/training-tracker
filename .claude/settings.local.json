@@ -4,7 +4,15 @@
       "Bash(./node_modules/.bin/esbuild scripts/verify-logic.ts --bundle --platform=node --format=esm --outfile=/tmp/verify-logic.mjs --log-level=warning)",
       "Bash(node /tmp/verify-logic.mjs)",
       "Bash(curl -s -o /dev/null -w \"local preview HTTP %{http_code}\\\\n\" http://localhost:4173/)",
-      "Bash(curl -s -o /dev/null -w \"manifest HTTP %{http_code}\\\\n\" http://localhost:4173/manifest.webmanifest)"
+      "Bash(curl -s -o /dev/null -w \"manifest HTTP %{http_code}\\\\n\" http://localhost:4173/manifest.webmanifest)",
+      "Bash(pkill -f \"vite preview\")",
+      "Bash(pkill -f \"vite\")",
+      "Bash(gh repo *)",
+      "Bash(echo \"repo: $\\(gh repo view HerzLeben/training-tracker --json url -q .url\\)\")",
+      "Bash(npm run *)",
+      "Bash(git add *)",
+      "Bash(git -c 'user.name=Wataru Kinoshita' -c user.email=wataru.kinoshita@herzleben.co.jp commit -q -m ' *)",
+      "Bash(git push *)"
     ]
   }
 }
