@@ -2,7 +2,7 @@
 // Node 25 の型ストリップ前提だが、拡張子なし import 解決のため esbuild でバンドルして実行する。
 import { splitForFrequency, slotForDate, categoriesForSlot } from '../src/engine/split.ts'
 import { buildMenu, deriveEmphasis, latestBody } from '../src/engine/menuEngine.ts'
-import { currentStreak, weekCalendar, completion } from '../src/lib/adherence.ts'
+import { currentStreak, weekCalendar, completion, monthView } from '../src/lib/adherence.ts'
 import type { Category, DailyMenu, Exercise, Settings } from '../src/types/index.ts'
 
 let pass = 0
@@ -105,6 +105,15 @@ const cal = weekCalendar(menus, settings, 7, '2025-06-16')
 check('週カレンダー7日', cal.length === 7)
 check('日曜rest', cal.find((c) => c.date === '2025-06-15')?.status === 'rest')
 check('木曜done', cal.find((c) => c.date === '2025-06-12')?.status === 'done')
+
+// --- 月カレンダー ---
+const mv = monthView(menus, settings, 2025, 5 /* June */, '2025-06-16')
+check('月ビュー42セル', mv.cells.length === 42)
+check('6/1は日曜→先頭セル', mv.cells[0]?.date === '2025-06-01')
+check('6/30が含まれる', mv.cells.some((c) => c?.date === '2025-06-30'))
+check('達成3日カウント', mv.doneCount === 3)
+check('6/12セルはdone', mv.cells.find((c) => c?.date === '2025-06-12')?.status === 'done')
+check('月末以降の余白はnull', mv.cells[mv.cells.length - 1] === null)
 
 console.log(`\n${pass} passed, ${fail} failed`)
 process.exit(fail === 0 ? 0 : 1)

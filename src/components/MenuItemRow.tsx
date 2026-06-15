@@ -25,7 +25,7 @@ export default function MenuItemRow({ item, onToggle }: Props) {
           {item.name}
         </div>
         <div className="text-xs text-slate-400">
-          {item.muscle} ・ {item.targetSets}セット × {item.targetReps}回
+          {item.muscle} · {item.targetSets} sets × {item.targetReps} reps
         </div>
       </div>
     </label>

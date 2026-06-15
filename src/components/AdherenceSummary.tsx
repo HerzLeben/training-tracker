@@ -19,8 +19,8 @@ const cellMark: Record<string, string> = {
   done: '◎',
   partial: '△',
   missed: '×',
-  rest: '休',
-  future: '・',
+  rest: 'R',
+  future: '·',
 }
 
 export default function AdherenceSummary({ menus, settings }: Props) {
@@ -33,18 +33,18 @@ export default function AdherenceSummary({ menus, settings }: Props) {
       <div className="grid grid-cols-2 gap-3">
         <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4 text-center">
           <div className="text-3xl font-bold text-orange-400">🔥 {streak}</div>
-          <div className="mt-1 text-xs text-slate-400">連続達成（日）</div>
+          <div className="mt-1 text-xs text-slate-400">Day streak</div>
         </div>
         <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4 text-center">
           <div className="text-3xl font-bold text-sky-400">
             {rate30 === null ? '—' : `${rate30}%`}
           </div>
-          <div className="mt-1 text-xs text-slate-400">直近30日の達成率</div>
+          <div className="mt-1 text-xs text-slate-400">30-day completion</div>
         </div>
       </div>
 
       <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4">
-        <div className="mb-2 text-sm font-medium text-slate-300">直近7日</div>
+        <div className="mb-2 text-sm font-medium text-slate-300">Last 7 days</div>
         <div className="flex justify-between gap-1">
           {week.map((c) => (
             <div key={c.date} className="flex flex-1 flex-col items-center gap-1">
@@ -61,10 +61,10 @@ export default function AdherenceSummary({ menus, settings }: Props) {
           ))}
         </div>
         <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-slate-500">
-          <span>◎ 達成</span>
-          <span>△ 一部</span>
-          <span>× 未達</span>
-          <span>休 休養</span>
+          <span>◎ Done</span>
+          <span>△ Partial</span>
+          <span>× Missed</span>
+          <span>R Rest</span>
         </div>
       </div>
     </div>

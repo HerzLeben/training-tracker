@@ -1,36 +1,36 @@
 import type { Exercise } from '../types'
 
-// ゴールドジム想定の標準種目セット。初回起動時に DB へ投入する。
-// id は固定文字列にして、再投入やインポート時の重複を防ぐ。
+// Standard exercise set (gym-oriented). Seeded into the DB on first launch.
+// Fixed string ids prevent duplicates on re-seed / import.
 type Seed = Omit<Exercise, 'isCustom' | 'enabled'>
 
 const SEED: Seed[] = [
-  // push（胸・肩・三頭）
-  { id: 'bench-press', name: 'ベンチプレス', slot: 'push', muscle: '胸' },
-  { id: 'incline-db-press', name: 'インクラインダンベルプレス', slot: 'push', muscle: '胸' },
-  { id: 'chest-press-machine', name: 'チェストプレス（マシン）', slot: 'push', muscle: '胸' },
-  { id: 'cable-fly', name: 'ケーブルフライ', slot: 'push', muscle: '胸' },
-  { id: 'shoulder-press', name: 'ショルダープレス', slot: 'push', muscle: '肩' },
-  { id: 'side-raise', name: 'サイドレイズ', slot: 'push', muscle: '肩' },
-  { id: 'triceps-pushdown', name: 'トライセプスプレスダウン', slot: 'push', muscle: '三頭' },
+  // push (chest / shoulders / triceps)
+  { id: 'bench-press', name: 'Bench Press', slot: 'push', muscle: 'Chest' },
+  { id: 'incline-db-press', name: 'Incline Dumbbell Press', slot: 'push', muscle: 'Chest' },
+  { id: 'chest-press-machine', name: 'Chest Press (Machine)', slot: 'push', muscle: 'Chest' },
+  { id: 'cable-fly', name: 'Cable Fly', slot: 'push', muscle: 'Chest' },
+  { id: 'shoulder-press', name: 'Shoulder Press', slot: 'push', muscle: 'Shoulders' },
+  { id: 'side-raise', name: 'Side Raise', slot: 'push', muscle: 'Shoulders' },
+  { id: 'triceps-pushdown', name: 'Triceps Pushdown', slot: 'push', muscle: 'Triceps' },
 
-  // pull（背中・二頭）
-  { id: 'lat-pulldown', name: 'ラットプルダウン', slot: 'pull', muscle: '背中' },
-  { id: 'seated-row', name: 'シーテッドロウ', slot: 'pull', muscle: '背中' },
-  { id: 'bent-over-row', name: 'ベントオーバーロウ', slot: 'pull', muscle: '背中' },
-  { id: 'pullup', name: 'チンニング（懸垂）', slot: 'pull', muscle: '背中' },
-  { id: 'face-pull', name: 'フェイスプル', slot: 'pull', muscle: '肩後部' },
-  { id: 'db-curl', name: 'ダンベルカール', slot: 'pull', muscle: '二頭' },
-  { id: 'hammer-curl', name: 'ハンマーカール', slot: 'pull', muscle: '二頭' },
+  // pull (back / biceps)
+  { id: 'lat-pulldown', name: 'Lat Pulldown', slot: 'pull', muscle: 'Back' },
+  { id: 'seated-row', name: 'Seated Row', slot: 'pull', muscle: 'Back' },
+  { id: 'bent-over-row', name: 'Bent-Over Row', slot: 'pull', muscle: 'Back' },
+  { id: 'pullup', name: 'Pull-Up', slot: 'pull', muscle: 'Back' },
+  { id: 'face-pull', name: 'Face Pull', slot: 'pull', muscle: 'Rear Delts' },
+  { id: 'db-curl', name: 'Dumbbell Curl', slot: 'pull', muscle: 'Biceps' },
+  { id: 'hammer-curl', name: 'Hammer Curl', slot: 'pull', muscle: 'Biceps' },
 
-  // legs（脚・臀・体幹）
-  { id: 'squat', name: 'バーベルスクワット', slot: 'legs', muscle: '脚' },
-  { id: 'leg-press', name: 'レッグプレス', slot: 'legs', muscle: '脚' },
-  { id: 'romanian-deadlift', name: 'ルーマニアンデッドリフト', slot: 'legs', muscle: 'ハム' },
-  { id: 'leg-extension', name: 'レッグエクステンション', slot: 'legs', muscle: '大腿四頭' },
-  { id: 'leg-curl', name: 'レッグカール', slot: 'legs', muscle: 'ハム' },
-  { id: 'calf-raise', name: 'カーフレイズ', slot: 'legs', muscle: 'ふくらはぎ' },
-  { id: 'hip-thrust', name: 'ヒップスラスト', slot: 'legs', muscle: '臀' },
+  // legs (quads / hamstrings / glutes / calves)
+  { id: 'squat', name: 'Barbell Squat', slot: 'legs', muscle: 'Quads' },
+  { id: 'leg-press', name: 'Leg Press', slot: 'legs', muscle: 'Quads' },
+  { id: 'romanian-deadlift', name: 'Romanian Deadlift', slot: 'legs', muscle: 'Hamstrings' },
+  { id: 'leg-extension', name: 'Leg Extension', slot: 'legs', muscle: 'Quads' },
+  { id: 'leg-curl', name: 'Leg Curl', slot: 'legs', muscle: 'Hamstrings' },
+  { id: 'calf-raise', name: 'Calf Raise', slot: 'legs', muscle: 'Calves' },
+  { id: 'hip-thrust', name: 'Hip Thrust', slot: 'legs', muscle: 'Glutes' },
 ]
 
 export const DEFAULT_EXERCISES: Exercise[] = SEED.map((e) => ({

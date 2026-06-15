@@ -35,7 +35,7 @@ export function diffDays(a: string, b: string): number {
   return Math.round(ms / 86400000)
 }
 
-const WD = ['日', '月', '火', '水', '木', '金', '土']
+const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 export function weekdayLabel(weekday: number): string {
   return WD[weekday] ?? '?'
 }

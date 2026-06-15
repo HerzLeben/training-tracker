@@ -11,9 +11,9 @@ export default function DataManager() {
     try {
       const text = await file.text()
       const r = await importJSON(text)
-      setMsg(`取り込み完了: 種目${r.exercises} / メニュー${r.menus} / 体組成${r.metrics}`)
+      setMsg(`Imported: ${r.exercises} exercises / ${r.menus} menus / ${r.metrics} metrics`)
     } catch (err) {
-      setMsg(`取り込み失敗: ${(err as Error).message}`)
+      setMsg(`Import failed: ${(err as Error).message}`)
     } finally {
       if (fileRef.current) fileRef.current.value = ''
       setTimeout(() => setMsg(''), 4000)
@@ -24,12 +24,12 @@ export default function DataManager() {
 
   return (
     <div className="space-y-2 rounded-2xl border border-slate-800 bg-slate-900 p-4">
-      <div className="text-sm font-medium text-slate-300">データの入出力</div>
-      <p className="text-xs text-slate-500">記録は端末内に保存されます。バックアップを取得・復元できます。</p>
-      <button onClick={() => exportJSON()} className={btn}>JSON でエクスポート（バックアップ）</button>
-      <button onClick={() => exportMenusCSV()} className={btn}>メニュー記録を CSV 出力</button>
-      <button onClick={() => exportMetricsCSV()} className={btn}>体組成を CSV 出力</button>
-      <button onClick={() => fileRef.current?.click()} className={btn}>JSON をインポート（復元）</button>
+      <div className="text-sm font-medium text-slate-300">Data</div>
+      <p className="text-xs text-slate-500">All data is stored on this device. Back it up or restore it here.</p>
+      <button onClick={() => exportJSON()} className={btn}>Export JSON (backup)</button>
+      <button onClick={() => exportMenusCSV()} className={btn}>Export menus as CSV</button>
+      <button onClick={() => exportMetricsCSV()} className={btn}>Export body metrics as CSV</button>
+      <button onClick={() => fileRef.current?.click()} className={btn}>Import JSON (restore)</button>
       <input ref={fileRef} type="file" accept="application/json" onChange={onImport} className="hidden" />
       {msg && <p className="text-center text-sm text-emerald-400">{msg}</p>}
     </div>

@@ -34,15 +34,15 @@ export default function TodayPage() {
   return (
     <div className="space-y-4">
       <header>
-        <h1 className="text-xl font-bold">今日のトレーニング</h1>
+        <h1 className="text-xl font-bold">Today's Training</h1>
         <p className="text-sm text-slate-400">
-          {today}（{wd}）
+          {today} ({wd})
         </p>
       </header>
 
       {!menu ? (
         <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 text-center text-slate-400">
-          メニューを準備中…
+          Preparing your menu…
         </div>
       ) : (
         <TodayMenu menu={menu} onToggle={handleToggle} onRegenerate={handleRegenerate} />

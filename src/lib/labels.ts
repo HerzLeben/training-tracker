@@ -1,13 +1,13 @@
 import type { GoalType, Slot } from '../types'
 
 export const SLOT_LABEL: Record<Slot, string> = {
-  push: 'プッシュ（胸・肩・三頭）',
-  pull: 'プル（背中・二頭）',
-  legs: 'レッグ（脚）',
-  upper: '上半身（押す・引く）',
-  lower: '下半身（脚）',
-  full: '全身',
-  rest: '休養',
+  push: 'Push (Chest / Shoulders / Triceps)',
+  pull: 'Pull (Back / Biceps)',
+  legs: 'Legs',
+  upper: 'Upper Body',
+  lower: 'Lower Body',
+  full: 'Full Body',
+  rest: 'Rest',
 }
 
 export const SLOT_SHORT: Record<Slot, string> = {
@@ -17,11 +17,11 @@ export const SLOT_SHORT: Record<Slot, string> = {
   upper: 'Upper',
   lower: 'Lower',
   full: 'Full',
-  rest: '休',
+  rest: 'Rest',
 }
 
 export const GOAL_LABEL: Record<GoalType, string> = {
-  cut: '減量',
-  bulk: '筋肥大',
-  maintain: '維持',
+  cut: 'Cut',
+  bulk: 'Bulk',
+  maintain: 'Maintain',
 }

@@ -95,7 +95,7 @@ export async function exportMetricsCSV(): Promise<void> {
 export async function importJSON(text: string): Promise<{ exercises: number; menus: number; metrics: number }> {
   const data = JSON.parse(text) as Partial<Backup>
   if (data.app !== 'training-tracker') {
-    throw new Error('このアプリのバックアップではありません。')
+    throw new Error('Not a Training Tracker backup file.')
   }
   await db.transaction('rw', db.settings, db.exercises, db.menus, db.metrics, async () => {
     if (data.settings) await db.settings.put({ ...data.settings, id: 'app' })

@@ -29,9 +29,9 @@ export default function ExerciseManager() {
 
   return (
     <div className="space-y-3 rounded-2xl border border-slate-800 bg-slate-900 p-4">
-      <div className="text-sm font-medium text-slate-300">種目カタログ</div>
+      <div className="text-sm font-medium text-slate-300">Exercise catalog</div>
       <p className="text-xs text-slate-500">
-        チェックを外すと提案対象から除外されます。自分の種目も追加できます。
+        Unchecked exercises are excluded from suggestions. You can add your own.
       </p>
 
       {SLOTS.map((s) => (
@@ -55,7 +55,7 @@ export default function ExerciseManager() {
                       onClick={() => deleteExercise(ex.id)}
                       className="ml-auto text-xs text-rose-400"
                     >
-                      削除
+                      Delete
                     </button>
                   )}
                 </li>
@@ -65,11 +65,11 @@ export default function ExerciseManager() {
       ))}
 
       <form onSubmit={add} className="space-y-2 border-t border-slate-800 pt-3">
-        <div className="text-xs font-medium text-slate-300">種目を追加</div>
+        <div className="text-xs font-medium text-slate-300">Add an exercise</div>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="種目名（例: ディップス）"
+          placeholder="Exercise name (e.g. Dips)"
           className={`w-full ${field}`}
         />
         <div className="grid grid-cols-2 gap-2">
@@ -83,11 +83,11 @@ export default function ExerciseManager() {
           <input
             value={muscle}
             onChange={(e) => setMuscle(e.target.value)}
-            placeholder="部位（例: 胸）"
+            placeholder="Muscle (e.g. Chest)"
             className={field}
           />
         </div>
-        <button className="w-full rounded-xl bg-slate-700 py-2 text-sm active:bg-slate-600">追加</button>
+        <button className="w-full rounded-xl bg-slate-700 py-2 text-sm active:bg-slate-600">Add</button>
       </form>
     </div>
   )

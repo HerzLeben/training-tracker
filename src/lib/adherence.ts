@@ -1,6 +1,6 @@
 import type { DailyMenu, Settings, Slot } from '../types'
 import { slotForDate } from '../engine/split'
-import { addDays, todayISO } from './date'
+import { addDays, todayISO, toISODate } from './date'
 
 // 達成率・ストリーク・週カレンダーの集計ロジック。
 
@@ -62,6 +62,51 @@ export function weekCalendar(
     })
   }
   return cells
+}
+
+export interface MonthCell extends DayCell {
+  day: number
+}
+
+export interface MonthView {
+  year: number
+  month: number // 0-based
+  cells: (MonthCell | null)[] // 42 cells (6 weeks × 7); null = padding
+  doneCount: number
+  trainingCount: number
+}
+
+/** Build a month's worth of calendar cells (6 weeks × 7 columns). */
+export function monthView(
+  menus: DailyMenu[],
+  settings: Settings,
+  year: number,
+  month: number,
+  today = todayISO(),
+): MonthView {
+  const map = byDate(menus)
+  const startPad = new Date(year, month, 1).getDay()
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+  const cells: (MonthCell | null)[] = []
+  let doneCount = 0
+  let trainingCount = 0
+
+  for (let i = 0; i < 42; i++) {
+    const dayNum = i - startPad + 1
+    if (dayNum < 1 || dayNum > daysInMonth) {
+      cells.push(null)
+      continue
+    }
+    const d = new Date(year, month, dayNum)
+    const date = toISODate(d)
+    const slot = slotForDate(date, settings.splitPattern)
+    const menu = map.get(date)
+    const status = statusFor(date, slot, menu, today)
+    if (slot !== 'rest' && date <= today) trainingCount++
+    if (status === 'done') doneCount++
+    cells.push({ date, weekday: d.getDay(), slot, status, pct: completion(menu), day: dayNum })
+  }
+  return { year, month, cells, doneCount, trainingCount }
 }
 
 /**

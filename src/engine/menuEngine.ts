@@ -32,12 +32,12 @@ function schemeFor(goal: GoalType): Scheme {
   }
 }
 
-const REST_NOTE = '今日は休養日です。睡眠と栄養で回復を。'
+const REST_NOTE = 'Rest day. Recover with sleep and nutrition.'
 
 const EMPHASIS_LABEL: Record<GoalType, string> = {
-  cut: '減量寄り',
-  bulk: '筋肥大寄り',
-  maintain: '維持',
+  cut: 'Fat-loss focus',
+  bulk: 'Muscle-gain focus',
+  maintain: 'Maintenance',
 }
 
 export function emphasisLabel(g: GoalType): string {

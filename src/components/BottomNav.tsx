@@ -1,10 +1,10 @@
 import { NavLink } from 'react-router-dom'
 
 const tabs = [
-  { to: '/today', label: '今日', icon: '🏋️' },
-  { to: '/progress', label: '進捗', icon: '📈' },
-  { to: '/body', label: '体組成', icon: '⚖️' },
-  { to: '/settings', label: '設定', icon: '⚙️' },
+  { to: '/today', label: 'Today', icon: '🏋️' },
+  { to: '/progress', label: 'Progress', icon: '📈' },
+  { to: '/body', label: 'Body', icon: '⚖️' },
+  { to: '/settings', label: 'Settings', icon: '⚙️' },
 ]
 
 export default function BottomNav() {

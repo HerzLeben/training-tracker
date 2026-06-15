@@ -6,8 +6,8 @@ export default function SettingsPage() {
   return (
     <div className="space-y-4">
       <header>
-        <h1 className="text-xl font-bold">設定</h1>
-        <p className="text-sm text-slate-400">目標・休養日・種目・データ管理</p>
+        <h1 className="text-xl font-bold">Settings</h1>
+        <p className="text-sm text-slate-400">Frequency, goals, exercises & data</p>
       </header>
       <SettingsForm />
       <ExerciseManager />

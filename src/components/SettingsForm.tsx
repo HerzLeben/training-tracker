@@ -33,7 +33,7 @@ export default function SettingsForm() {
   return (
     <div className="space-y-4 rounded-2xl border border-slate-800 bg-slate-900 p-4">
       <div>
-        <label className="mb-1 block text-sm font-medium text-slate-300">週のトレーニング回数</label>
+        <label className="mb-1 block text-sm font-medium text-slate-300">Sessions per week</label>
         <div className="grid grid-cols-5 gap-2">
           {FREQS.map((f) => (
             <button
@@ -45,15 +45,17 @@ export default function SettingsForm() {
                   : 'border-slate-700 text-slate-300'
               }`}
             >
-              {f}回
+              {f}×
             </button>
           ))}
         </div>
-        <p className="mt-1 text-xs text-slate-500">回数に応じて分割（全身/上下/部位別）を自動構築します。</p>
+        <p className="mt-1 text-xs text-slate-500">
+          The split (full body / upper-lower / push-pull-legs) is built automatically.
+        </p>
       </div>
 
       <div>
-        <div className="mb-1 text-sm font-medium text-slate-300">週の分割（自動）</div>
+        <div className="mb-1 text-sm font-medium text-slate-300">Weekly split (auto)</div>
         <div className="flex justify-between gap-1">
           {[0, 1, 2, 3, 4, 5, 6].map((wd) => (
             <div key={wd} className="flex flex-1 flex-col items-center gap-1">
@@ -73,13 +75,14 @@ export default function SettingsForm() {
       </div>
 
       <div className="border-t border-slate-800 pt-3">
-        <div className="mb-1 text-sm font-medium text-slate-300">目標（体組成）</div>
+        <div className="mb-1 text-sm font-medium text-slate-300">Goals (body composition)</div>
         <p className="mb-2 text-xs text-slate-500">
-          目標と「体組成」タブの最新値の差から、減量寄り／筋肥大寄りを自動で決めます。
+          The fat-loss vs. muscle-gain focus is chosen automatically from the gap between these
+          targets and your latest values on the Body tab.
         </p>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="mb-1 block text-xs text-slate-400">目標体脂肪率 (%)</label>
+            <label className="mb-1 block text-xs text-slate-400">Target body fat (%)</label>
             <input
               type="number"
               inputMode="decimal"
@@ -87,12 +90,12 @@ export default function SettingsForm() {
               value={fat}
               onChange={(e) => setFat(e.target.value)}
               onBlur={saveTargets}
-              placeholder="例 15"
+              placeholder="e.g. 15"
               className={field}
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs text-slate-400">目標筋肉量 (kg)</label>
+            <label className="mb-1 block text-xs text-slate-400">Target muscle (kg)</label>
             <input
               type="number"
               inputMode="decimal"
@@ -100,7 +103,7 @@ export default function SettingsForm() {
               value={muscle}
               onChange={(e) => setMuscle(e.target.value)}
               onBlur={saveTargets}
-              placeholder="例 33"
+              placeholder="e.g. 33"
               className={field}
             />
           </div>

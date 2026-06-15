@@ -12,14 +12,14 @@ export default function AdherenceChart({ menus }: Props) {
   if (data.length === 0) {
     return (
       <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 text-center text-sm text-slate-400">
-        トレーニング記録がまだありません。
+        No training records yet.
       </div>
     )
   }
 
   return (
     <div className="rounded-2xl border border-slate-800 bg-slate-900 p-3">
-      <div className="mb-2 px-1 text-sm font-medium text-slate-300">達成率の推移</div>
+      <div className="mb-2 px-1 text-sm font-medium text-slate-300">Completion trend</div>
       <ResponsiveContainer width="100%" height={200}>
         <LineChart data={data} margin={{ top: 5, right: 8, left: -20, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
@@ -28,7 +28,7 @@ export default function AdherenceChart({ menus }: Props) {
           <Tooltip
             contentStyle={{ background: '#0f172a', border: '1px solid #1e293b', borderRadius: 8 }}
             labelStyle={{ color: '#cbd5e1' }}
-            formatter={(v: number) => [`${v}%`, '達成率']}
+            formatter={(v: number) => [`${v}%`, 'Completion']}
           />
           <Line type="monotone" dataKey="pct" stroke="#38bdf8" strokeWidth={2} dot={{ r: 2 }} />
         </LineChart>

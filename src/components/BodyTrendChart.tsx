@@ -18,14 +18,14 @@ export default function BodyTrendChart({ metrics }: Props) {
   if (data.length === 0) {
     return (
       <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 text-center text-sm text-slate-400">
-        記録がまだありません。
+        No records yet.
       </div>
     )
   }
 
   return (
     <div className="rounded-2xl border border-slate-800 bg-slate-900 p-3">
-      <div className="mb-2 px-1 text-sm font-medium text-slate-300">体重・体脂肪の推移</div>
+      <div className="mb-2 px-1 text-sm font-medium text-slate-300">Body trend</div>
       <ResponsiveContainer width="100%" height={220}>
         <LineChart data={data} margin={{ top: 5, right: 8, left: -20, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
@@ -40,7 +40,7 @@ export default function BodyTrendChart({ metrics }: Props) {
             yAxisId="w"
             type="monotone"
             dataKey="weight"
-            name="体重(kg)"
+            name="Weight (kg)"
             stroke="#38bdf8"
             strokeWidth={2}
             connectNulls
@@ -50,7 +50,7 @@ export default function BodyTrendChart({ metrics }: Props) {
             yAxisId="w"
             type="monotone"
             dataKey="muscle"
-            name="筋肉量(kg)"
+            name="Muscle (kg)"
             stroke="#34d399"
             strokeWidth={2}
             connectNulls
@@ -60,7 +60,7 @@ export default function BodyTrendChart({ metrics }: Props) {
             yAxisId="f"
             type="monotone"
             dataKey="fat"
-            name="体脂肪(%)"
+            name="Body fat (%)"
             stroke="#f472b6"
             strokeWidth={2}
             connectNulls

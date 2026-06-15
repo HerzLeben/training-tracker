@@ -13,19 +13,26 @@ export const defaultSettings = (): Settings => ({
   splitPattern: splitForFrequency(DEFAULT_FREQUENCY),
 })
 
-/** 初回起動時に設定・種目カタログを投入する（冪等）。古い設定は移行する。 */
+/** Seed settings and exercise catalog on first launch (idempotent); migrate old data. */
 export async function ensureSeeded(): Promise<void> {
   await db.transaction('rw', db.settings, db.exercises, async () => {
     const s = await db.settings.get('app')
-    // weeklyFrequency が無い = 旧スキーマ → 既定で作り直す（目標値があれば引き継ぐ）。
+    // No weeklyFrequency = old schema → rebuild from defaults (carry over targets).
     if (!s || s.weeklyFrequency === undefined) {
       const carried: Partial<Settings> = s
         ? { targetBodyFatPct: s.targetBodyFatPct, targetMuscleKg: s.targetMuscleKg }
         : {}
       await db.settings.put({ ...defaultSettings(), ...carried })
     }
-    const count = await db.exercises.count()
-    if (count === 0) await db.exercises.bulkPut(DEFAULT_EXERCISES)
+    // Keep default exercises (name/muscle) in sync, preserving the user's
+    // enabled toggles. Custom exercises are left untouched.
+    const existing = await db.exercises.toArray()
+    const byId = new Map(existing.map((e) => [e.id, e]))
+    const merged = DEFAULT_EXERCISES.map((d) => ({
+      ...d,
+      enabled: byId.get(d.id)?.enabled ?? d.enabled,
+    }))
+    await db.exercises.bulkPut(merged)
   })
 }
 

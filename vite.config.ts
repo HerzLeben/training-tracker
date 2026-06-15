@@ -9,9 +9,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'icons/icon-192.png', 'icons/icon-512.png'],
       manifest: {
-        name: 'トレーニング達成管理',
-        short_name: 'トレ達成',
-        description: '毎日のトレーニングメニューをこなせたかを記録するアプリ',
+        name: 'Training Tracker',
+        short_name: 'Training',
+        description: 'Track whether you complete your daily training menu.',
         theme_color: '#0f172a',
         background_color: '#0f172a',
         display: 'standalone',
