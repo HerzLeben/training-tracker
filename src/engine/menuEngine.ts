@@ -1,4 +1,4 @@
-import type { BodyMetric, Category, DailyMenu, Exercise, GoalType, MenuItem, Settings } from '../types'
+import type { BodyMetric, Category, DailyMenu, Exercise, GoalType, MenuItem, Settings, Slot } from '../types'
 import { slotForDate, categoriesForSlot } from './split'
 import { getMenu, putMenu, listMenus, listEnabledExercises, listMetrics } from '../db/repo'
 import { getSettings } from '../db/repo'
@@ -143,11 +143,42 @@ function round(n: number): number {
   return Math.round(n * 10) / 10
 }
 
+const CORE_SETS = 3
+
+/** 体幹（コア）ブロックを組む。daily 種目（プランク）は毎日、休養日にも入れる。 */
+export function buildCore(slot: Slot, corePool: Exercise[], rotationIndex: number): MenuItem[] {
+  const toItem = (e: Exercise): MenuItem => ({
+    exerciseId: e.id,
+    name: e.name,
+    muscle: e.muscle,
+    category: 'core',
+    targetSets: CORE_SETS,
+    targetReps: e.target ?? '12–15 reps',
+    daily: e.daily,
+    done: false,
+  })
+
+  const daily = corePool.filter((e) => e.daily).sort((a, b) => a.id.localeCompare(b.id))
+  const items = daily.map(toItem)
+
+  // トレーニング日は回転する追加コアを1つ加える（休養日は daily のみ）。
+  if (slot !== 'rest') {
+    const rotating = corePool.filter((e) => !e.daily).sort((a, b) => a.id.localeCompare(b.id))
+    if (rotating.length > 0) {
+      const pick = rotating[((rotationIndex % rotating.length) + rotating.length) % rotating.length]
+      items.push(toItem(pick))
+    }
+  }
+  return items
+}
+
 /** メニューを純粋に組み立てる（DB 非依存）。 */
 export function buildMenu(params: {
   date: string
   settings: Settings
   exercisesByCat: Record<Category, Exercise[]>
+  corePool: Exercise[]
+  coreRotationIndex: number
   emphasis: GoalType
   priorSameSlotCount: number
   lastSameSlotIds: string[]
@@ -158,6 +189,8 @@ export function buildMenu(params: {
     date,
     settings,
     exercisesByCat,
+    corePool,
+    coreRotationIndex,
     emphasis,
     priorSameSlotCount,
     lastSameSlotIds,
@@ -165,9 +198,10 @@ export function buildMenu(params: {
     lastByExercise,
   } = params
   const slot = slotForDate(date, settings.splitPattern)
+  const coreItems = buildCore(slot, corePool, coreRotationIndex)
 
   if (slot === 'rest') {
-    return { date, slot, items: [], note: REST_NOTE, emphasis, estMinutes: 0, generatedAt: stamp() }
+    return { date, slot, items: [], coreItems, note: REST_NOTE, emphasis, estMinutes: 0, generatedAt: stamp() }
   }
 
   const scheme = schemeFor(emphasis)
@@ -192,6 +226,7 @@ export function buildMenu(params: {
     date,
     slot,
     items,
+    coreItems,
     emphasis,
     estMinutes: items.length * scheme.perExerciseMin,
     generatedAt: stamp(),
@@ -202,8 +237,9 @@ function stamp(): number {
   return Date.now()
 }
 
+/** push/pull/legs のみを分類（core は別ブロックで扱う）。 */
 function groupByCat(exercises: Exercise[]): Record<Category, Exercise[]> {
-  const out: Record<Category, Exercise[]> = { push: [], pull: [], legs: [] }
+  const out: Record<Category, Exercise[]> = { push: [], pull: [], legs: [], core: [] }
   for (const e of exercises) out[e.slot].push(e)
   return out
 }
@@ -228,8 +264,6 @@ export async function ensureMenuForDate(
   regenerate = false,
 ): Promise<DailyMenu> {
   const existing = await getMenu(date)
-  if (existing && !regenerate) return existing
-
   const cfg = settings ?? (await getSettings())
   const slot = slotForDate(date, cfg.splitPattern)
   const [history, metrics, enabled] = await Promise.all([
@@ -237,8 +271,20 @@ export async function ensureMenuForDate(
     listMetrics(),
     listEnabledExercises(),
   ])
-  const emphasis = deriveEmphasis(latestBody(metrics), cfg)
+  const byCat = groupByCat(enabled)
+  const pastCount = history.filter((m) => m.date < date).length
 
+  // 既存メニューがあり再生成不要なら、コア未付与のときだけ非破壊で補完する。
+  if (existing && !regenerate) {
+    if (existing.coreItems === undefined) {
+      const backfilled = { ...existing, coreItems: buildCore(existing.slot, byCat.core, pastCount) }
+      await putMenu(backfilled)
+      return backfilled
+    }
+    return existing
+  }
+
+  const emphasis = deriveEmphasis(latestBody(metrics), cfg)
   const sameSlotBefore = history
     .filter((m) => m.slot === slot && m.date < date)
     .sort((a, b) => a.date.localeCompare(b.date))
@@ -247,7 +293,9 @@ export async function ensureMenuForDate(
   const menu = buildMenu({
     date,
     settings: cfg,
-    exercisesByCat: groupByCat(enabled),
+    exercisesByCat: byCat,
+    corePool: byCat.core,
+    coreRotationIndex: pastCount,
     emphasis,
     priorSameSlotCount: sameSlotBefore.length,
     lastSameSlotIds: last ? last.items.map((i) => i.exerciseId) : [],

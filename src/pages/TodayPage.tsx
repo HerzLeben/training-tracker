@@ -1,15 +1,18 @@
 import { useEffect, useRef } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/db'
-import { getSettings, toggleMenuItem, setMenuItemWeight } from '../db/repo'
+import { getSettings, toggleMenuItem, setMenuItemWeight, toggleCoreItem } from '../db/repo'
 import { ensureMenuForDate } from '../engine/menuEngine'
+import { coreStreak } from '../lib/adherence'
 import { todayISO, weekdayLabel } from '../lib/date'
 import TodayMenu from '../components/TodayMenu'
+import CoreBlock from '../components/CoreBlock'
 
 export default function TodayPage() {
   const today = todayISO()
   const settings = useLiveQuery(() => db.settings.get('app'), [])
   const menu = useLiveQuery(() => db.menus.get(today), [today])
+  const allMenus = useLiveQuery(() => db.menus.toArray(), [])
   const ensuredFor = useRef<string | null>(null)
 
   // 設定が読めたら、当日メニューが無ければ生成・保存する（日付ごとに1回）。
@@ -26,6 +29,10 @@ export default function TodayPage() {
 
   const handleWeightChange = (exerciseId: string, weightKg: number) => {
     void setMenuItemWeight(today, exerciseId, weightKg)
+  }
+
+  const handleCoreToggle = (exerciseId: string, done: boolean) => {
+    void toggleCoreItem(today, exerciseId, done)
   }
 
   const handleRegenerate = async () => {
@@ -49,12 +56,19 @@ export default function TodayPage() {
           Preparing your menu…
         </div>
       ) : (
-        <TodayMenu
-          menu={menu}
-          onToggle={handleToggle}
-          onWeightChange={handleWeightChange}
-          onRegenerate={handleRegenerate}
-        />
+        <>
+          <TodayMenu
+            menu={menu}
+            onToggle={handleToggle}
+            onWeightChange={handleWeightChange}
+            onRegenerate={handleRegenerate}
+          />
+          <CoreBlock
+            items={menu.coreItems ?? []}
+            streak={coreStreak(allMenus ?? [])}
+            onToggle={handleCoreToggle}
+          />
+        </>
       )}
     </div>
   )

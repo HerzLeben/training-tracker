@@ -5,7 +5,7 @@ import { upsertExercise, deleteExercise } from '../db/repo'
 import type { Category, Exercise } from '../types'
 import { SLOT_LABEL } from '../lib/labels'
 
-const SLOTS: Category[] = ['push', 'pull', 'legs']
+const SLOTS: Category[] = ['push', 'pull', 'legs', 'core']
 
 export default function ExerciseManager() {
   const exercises = useLiveQuery(() => db.exercises.toArray(), [])
@@ -53,20 +53,24 @@ export default function ExerciseManager() {
                     {ex.name}
                     <span className="ml-1 text-xs text-slate-500">({ex.muscle})</span>
                   </span>
-                  <input
-                    type="number"
-                    inputMode="decimal"
-                    step="2.5"
-                    value={ex.weightKg ?? ''}
-                    onChange={(e) =>
-                      upsertExercise({
-                        ...ex,
-                        weightKg: e.target.value === '' ? undefined : Number(e.target.value),
-                      })
-                    }
-                    placeholder="kg"
-                    className="w-16 rounded-lg border border-slate-700 bg-slate-800 px-2 py-1 text-right text-sm"
-                  />
+                  {ex.slot === 'core' ? (
+                    <span className="shrink-0 text-xs text-slate-500">{ex.target ?? 'bodyweight'}</span>
+                  ) : (
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      step="2.5"
+                      value={ex.weightKg ?? ''}
+                      onChange={(e) =>
+                        upsertExercise({
+                          ...ex,
+                          weightKg: e.target.value === '' ? undefined : Number(e.target.value),
+                        })
+                      }
+                      placeholder="kg"
+                      className="w-16 rounded-lg border border-slate-700 bg-slate-800 px-2 py-1 text-right text-sm"
+                    />
+                  )}
                   {ex.isCustom && (
                     <button
                       onClick={() => deleteExercise(ex.id)}

@@ -1,7 +1,7 @@
 // アプリ全体で使うドメイン型。
 
-/** 種目のカテゴリ（種目カタログのタグ）。 */
-export type Category = 'push' | 'pull' | 'legs'
+/** 種目のカテゴリ（種目カタログのタグ）。core は重量を扱わない体幹種目。 */
+export type Category = 'push' | 'pull' | 'legs' | 'core'
 
 /** トレーニング日の種別（分割の単位）。カテゴリに加え複合・休養を持つ。 */
 export type Slot = Category | 'upper' | 'lower' | 'full' | 'rest'
@@ -23,6 +23,10 @@ export interface Exercise {
   enabled: boolean
   /** 現在のワーク重量(kg)。初期値はカタログで入力、漸進性過負荷で更新。 */
   weightKg?: number
+  /** 毎日提示する種目か（例: プランク）。主に core 用。 */
+  daily?: boolean
+  /** 重量を使わない種目の目安（例: '45–60s', '12–15 reps'）。core 用。 */
+  target?: string
 }
 
 /** 設定（単一レコード, id = 'app'）。 */
@@ -52,6 +56,8 @@ export interface MenuItem {
   targetReps: string
   /** その日のターゲット重量(kg)。漸進性過負荷で提案、Today で +/- 調整可。 */
   weightKg?: number
+  /** 毎日提示の体幹種目か（プランク等）。core ブロック用。 */
+  daily?: boolean
   done: boolean
 }
 
@@ -60,6 +66,8 @@ export interface DailyMenu {
   date: string
   slot: Slot
   items: MenuItem[]
+  /** 体幹（コア）種目。プランクは毎日、休養日にも提示する。 */
+  coreItems?: MenuItem[]
   /** その日の自動判定方針。 */
   emphasis?: GoalType
   /** 筋トレ部分の目安所要時間（分）。 */

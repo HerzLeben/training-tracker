@@ -5,6 +5,14 @@ import type { Exercise } from '../types'
 type Seed = Omit<Exercise, 'isCustom' | 'enabled'>
 
 const SEED: Seed[] = [
+  // core (trained without external load; Plank is daily)
+  { id: 'plank', name: 'Plank', slot: 'core', muscle: 'Core', daily: true, target: '45–60s' },
+  { id: 'side-plank', name: 'Side Plank', slot: 'core', muscle: 'Obliques', target: '30–45s/side' },
+  { id: 'hanging-leg-raise', name: 'Hanging Leg Raise', slot: 'core', muscle: 'Lower Abs', target: '12–15 reps' },
+  { id: 'cable-crunch', name: 'Cable Crunch', slot: 'core', muscle: 'Abs', target: '15–20 reps' },
+  { id: 'russian-twist', name: 'Russian Twist', slot: 'core', muscle: 'Obliques', target: '20 reps' },
+  { id: 'ab-rollout', name: 'Ab Rollout', slot: 'core', muscle: 'Abs', target: '10–12 reps' },
+
   // push (chest / shoulders / triceps)
   { id: 'bench-press', name: 'Bench Press', slot: 'push', muscle: 'Chest' },
   { id: 'incline-db-press', name: 'Incline Dumbbell Press', slot: 'push', muscle: 'Chest' },

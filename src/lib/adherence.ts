@@ -137,6 +137,29 @@ export function currentStreak(
   return streak
 }
 
+/**
+ * デイリーコア（プランク等）の連続達成日数。
+ * その日の daily コアが全て done なら継続。当日が未達ならまだ未確定として遡る。
+ */
+export function coreStreak(menus: DailyMenu[], today = todayISO()): number {
+  const map = byDate(menus)
+  let streak = 0
+  for (let i = 0; i < 400; i++) {
+    const date = addDays(today, -i)
+    const menu = map.get(date)
+    const daily = menu?.coreItems?.filter((c) => c.daily) ?? []
+    const allDone = daily.length > 0 && daily.every((c) => c.done)
+    if (allDone) {
+      streak++
+    } else if (i === 0) {
+      continue // 当日は未確定
+    } else {
+      break
+    }
+  }
+  return streak
+}
+
 /** トレーニング日の日次達成率の時系列（チャート用）。 */
 export function adherenceSeries(menus: DailyMenu[]): { date: string; pct: number }[] {
   return menus

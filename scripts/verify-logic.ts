@@ -1,8 +1,8 @@
 // 純粋ロジック（分割・方針判定・メニュー組立・集計）の簡易検証。
 // Node 25 の型ストリップ前提だが、拡張子なし import 解決のため esbuild でバンドルして実行する。
 import { splitForFrequency, slotForDate, categoriesForSlot } from '../src/engine/split.ts'
-import { buildMenu, deriveEmphasis, latestBody, incrementFor } from '../src/engine/menuEngine.ts'
-import { currentStreak, weekCalendar, completion, monthView } from '../src/lib/adherence.ts'
+import { buildMenu, buildCore, deriveEmphasis, latestBody, incrementFor } from '../src/engine/menuEngine.ts'
+import { currentStreak, weekCalendar, completion, monthView, coreStreak } from '../src/lib/adherence.ts'
 import { buildPlan } from '../src/lib/plan.ts'
 import type { BodyMetric, Category, DailyMenu, Exercise, Settings } from '../src/types/index.ts'
 
@@ -61,8 +61,13 @@ const byCat: Record<Category, Exercise[]> = {
   pull: cols.map((x) => mkEx('l' + x, 'pull')),
   legs: cols.map((x) => mkEx('g' + x, 'legs')),
 }
+const corePool: Exercise[] = [
+  { id: 'plank', name: 'Plank', slot: 'core', muscle: 'Core', isCustom: false, enabled: true, daily: true, target: '45–60s' },
+  { id: 'cable-crunch', name: 'Cable Crunch', slot: 'core', muscle: 'Abs', isCustom: false, enabled: true, target: '15–20 reps' },
+  { id: 'russian-twist', name: 'Russian Twist', slot: 'core', muscle: 'Obliques', isCustom: false, enabled: true, target: '20 reps' },
+]
 const args = (over: Record<string, unknown> = {}) => ({
-  date: '2025-06-16', settings: baseSettings(), exercisesByCat: byCat,
+  date: '2025-06-16', settings: baseSettings(), exercisesByCat: byCat, corePool, coreRotationIndex: 0,
   emphasis: 'maintain' as const, priorSameSlotCount: 0, lastSameSlotIds: [], recentAdherence: null,
   lastByExercise: {}, ...over,
 })
@@ -112,9 +117,35 @@ const full = buildMenu(args({ date: '2025-06-16', settings: baseSettings({ weekl
 const cats = new Set(full.items.map((i) => i.exerciseId[0])) // p/l/g
 check('fullは複数部位から採用', full.slot === 'full' && cats.size >= 2)
 
-// rest 日
+// rest 日（コアは付くが筋トレ種目は0）
 const rest = buildMenu(args({ date: '2025-06-15' }) as never)
-check('休養は種目0+note', rest.slot === 'rest' && rest.items.length === 0 && !!rest.note)
+check('休養は筋トレ0+note', rest.slot === 'rest' && rest.items.length === 0 && !!rest.note)
+
+// --- 体幹（コア）ブロック ---
+const coreTraining = buildCore('push', corePool, 0)
+check('トレ日コアはdaily+追加1 = 2種目', coreTraining.length === 2)
+check('コア先頭はプランク(daily)', coreTraining[0].exerciseId === 'plank' && coreTraining[0].daily === true)
+check('プランクの目安は45–60s', coreTraining[0].targetReps === '45–60s')
+const coreRest = buildCore('rest', corePool, 0)
+check('休養日コアはdailyのみ(プランク)', coreRest.length === 1 && coreRest[0].exerciseId === 'plank')
+// 回転で追加コアが変わる
+const add0 = buildCore('push', corePool, 0).find((c) => !c.daily)?.exerciseId
+const add1 = buildCore('push', corePool, 1).find((c) => !c.daily)?.exerciseId
+check('追加コアは回転で変化', add0 !== add1)
+// メニュー出力に coreItems が含まれる（休養日も）
+check('rest にも coreItems', (rest.coreItems?.length ?? 0) === 1)
+const train = buildMenu(args({ date: '2025-06-16' }) as never)
+check('トレ日メニューに coreItems', (train.coreItems?.length ?? 0) === 2)
+
+// コアのストリーク
+const coreMenu = (date: string, plankDone: boolean): DailyMenu => ({
+  date, slot: 'push', generatedAt: 0, items: [],
+  coreItems: [{ exerciseId: 'plank', name: 'Plank', muscle: 'Core', category: 'core', targetSets: 3, targetReps: '45–60s', daily: true, done: plankDone }],
+})
+const coreDays = [coreMenu('2025-06-13', true), coreMenu('2025-06-14', true), coreMenu('2025-06-15', true)]
+check('コアストリーク3(当日未確定で遡る)', coreStreak(coreDays, '2025-06-16') === 3)
+// 06-14 が抜けるとそこで途切れる（06-13 は数えない）
+check('抜けで途切れる', coreStreak([coreMenu('2025-06-13', true), coreMenu('2025-06-15', true)], '2025-06-15') === 1)
 
 // --- 大きなプラン ---
 const planMetrics: BodyMetric[] = [

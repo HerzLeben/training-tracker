@@ -102,6 +102,16 @@ export async function toggleMenuItem(date: string, exerciseId: string, done: boo
   await db.menus.put(menu)
 }
 
+/** 指定日のコア（体幹）種目のチェックを更新して保存。 */
+export async function toggleCoreItem(date: string, exerciseId: string, done: boolean): Promise<void> {
+  const menu = await db.menus.get(date)
+  if (!menu || !menu.coreItems) return
+  menu.coreItems = menu.coreItems.map((it) =>
+    it.exerciseId === exerciseId ? { ...it, done } : it,
+  )
+  await db.menus.put(menu)
+}
+
 /**
  * 指定日の種目の重量を更新。あわせて種目の現在ワーク重量も同期する
  * （カタログ表示と次回の提案の土台を実態に合わせる）。
