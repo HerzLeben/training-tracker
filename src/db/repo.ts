@@ -31,6 +31,7 @@ export async function ensureSeeded(): Promise<void> {
     const merged = DEFAULT_EXERCISES.map((d) => ({
       ...d,
       enabled: byId.get(d.id)?.enabled ?? d.enabled,
+      weightKg: byId.get(d.id)?.weightKg ?? d.weightKg,
     }))
     await db.exercises.bulkPut(merged)
   })
@@ -52,10 +53,11 @@ export async function setFrequency(freq: number): Promise<void> {
   await updateSettings({ weeklyFrequency: f, splitPattern: splitForFrequency(f) })
 }
 
-/** 目標体脂肪率・目標筋肉量を設定（undefined で未設定に戻す）。 */
+/** 目標体脂肪率・目標筋肉量・期限を設定（undefined で未設定に戻す）。 */
 export async function setTargets(patch: {
   targetBodyFatPct?: number
   targetMuscleKg?: number
+  targetDate?: string
 }): Promise<void> {
   await updateSettings(patch)
 }
@@ -98,6 +100,29 @@ export async function toggleMenuItem(date: string, exerciseId: string, done: boo
     it.exerciseId === exerciseId ? { ...it, done } : it,
   )
   await db.menus.put(menu)
+}
+
+/**
+ * 指定日の種目の重量を更新。あわせて種目の現在ワーク重量も同期する
+ * （カタログ表示と次回の提案の土台を実態に合わせる）。
+ */
+export async function setMenuItemWeight(
+  date: string,
+  exerciseId: string,
+  weightKg: number,
+): Promise<void> {
+  const w = Math.max(0, Math.round(weightKg * 10) / 10)
+  await db.transaction('rw', db.menus, db.exercises, async () => {
+    const menu = await db.menus.get(date)
+    if (menu) {
+      menu.items = menu.items.map((it) =>
+        it.exerciseId === exerciseId ? { ...it, weightKg: w } : it,
+      )
+      await db.menus.put(menu)
+    }
+    const ex = await db.exercises.get(exerciseId)
+    if (ex) await db.exercises.put({ ...ex, weightKg: w })
+  })
 }
 
 // --- 体組成 ---

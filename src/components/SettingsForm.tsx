@@ -11,12 +11,14 @@ export default function SettingsForm() {
   const settings = useLiveQuery(() => db.settings.get('app'), [])
   const [fat, setFat] = useState('')
   const [muscle, setMuscle] = useState('')
+  const [date, setDate] = useState('')
 
   // 設定読込時に入力欄へ反映。
   useEffect(() => {
     if (!settings) return
     setFat(settings.targetBodyFatPct?.toString() ?? '')
     setMuscle(settings.targetMuscleKg?.toString() ?? '')
+    setDate(settings.targetDate ?? '')
   }, [settings])
 
   if (!settings) return null
@@ -25,6 +27,7 @@ export default function SettingsForm() {
     void setTargets({
       targetBodyFatPct: fat === '' ? undefined : Number(fat),
       targetMuscleKg: muscle === '' ? undefined : Number(muscle),
+      targetDate: date === '' ? undefined : date,
     })
   }
 
@@ -107,6 +110,16 @@ export default function SettingsForm() {
               className={field}
             />
           </div>
+        </div>
+        <div className="mt-3">
+          <label className="mb-1 block text-xs text-slate-400">Target date (by when)</label>
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            onBlur={saveTargets}
+            className={field}
+          />
         </div>
       </div>
     </div>

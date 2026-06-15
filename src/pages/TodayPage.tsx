@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/db'
-import { getSettings, toggleMenuItem } from '../db/repo'
+import { getSettings, toggleMenuItem, setMenuItemWeight } from '../db/repo'
 import { ensureMenuForDate } from '../engine/menuEngine'
 import { todayISO, weekdayLabel } from '../lib/date'
 import TodayMenu from '../components/TodayMenu'
@@ -22,6 +22,10 @@ export default function TodayPage() {
 
   const handleToggle = (exerciseId: string, done: boolean) => {
     void toggleMenuItem(today, exerciseId, done)
+  }
+
+  const handleWeightChange = (exerciseId: string, weightKg: number) => {
+    void setMenuItemWeight(today, exerciseId, weightKg)
   }
 
   const handleRegenerate = async () => {
@@ -45,7 +49,12 @@ export default function TodayPage() {
           Preparing your menu…
         </div>
       ) : (
-        <TodayMenu menu={menu} onToggle={handleToggle} onRegenerate={handleRegenerate} />
+        <TodayMenu
+          menu={menu}
+          onToggle={handleToggle}
+          onWeightChange={handleWeightChange}
+          onRegenerate={handleRegenerate}
+        />
       )}
     </div>
   )

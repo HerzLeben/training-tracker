@@ -1,9 +1,10 @@
 // 純粋ロジック（分割・方針判定・メニュー組立・集計）の簡易検証。
 // Node 25 の型ストリップ前提だが、拡張子なし import 解決のため esbuild でバンドルして実行する。
 import { splitForFrequency, slotForDate, categoriesForSlot } from '../src/engine/split.ts'
-import { buildMenu, deriveEmphasis, latestBody } from '../src/engine/menuEngine.ts'
+import { buildMenu, deriveEmphasis, latestBody, incrementFor } from '../src/engine/menuEngine.ts'
 import { currentStreak, weekCalendar, completion, monthView } from '../src/lib/adherence.ts'
-import type { Category, DailyMenu, Exercise, Settings } from '../src/types/index.ts'
+import { buildPlan } from '../src/lib/plan.ts'
+import type { BodyMetric, Category, DailyMenu, Exercise, Settings } from '../src/types/index.ts'
 
 let pass = 0
 let fail = 0
@@ -52,34 +53,59 @@ check('latestBodyは項目ごと最新', (() => {
   return l.fat === 18 && l.muscle === 30
 })())
 
-// --- メニュー組立 + 30分予算 ---
-const mkEx = (id: string, cat: Category): Exercise => ({ id, name: id.toUpperCase(), slot: cat, muscle: 'm', isCustom: false, enabled: true })
+// --- メニュー組立 + 平日/休日の時間予算 ---
+const mkEx = (id: string, cat: Category, w?: number): Exercise => ({ id, name: id.toUpperCase(), slot: cat, muscle: 'm', isCustom: false, enabled: true, weightKg: w })
+const cols = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
 const byCat: Record<Category, Exercise[]> = {
-  push: ['a', 'b', 'c', 'd', 'e'].map((x) => mkEx('p' + x, 'push')),
-  pull: ['a', 'b', 'c', 'd', 'e'].map((x) => mkEx('l' + x, 'pull')),
-  legs: ['a', 'b', 'c', 'd', 'e'].map((x) => mkEx('g' + x, 'legs')),
+  push: cols.map((x) => mkEx('p' + x, 'push')),
+  pull: cols.map((x) => mkEx('l' + x, 'pull')),
+  legs: cols.map((x) => mkEx('g' + x, 'legs')),
 }
 const args = (over: Record<string, unknown> = {}) => ({
   date: '2025-06-16', settings: baseSettings(), exercisesByCat: byCat,
-  emphasis: 'maintain' as const, priorSameSlotCount: 0, lastSameSlotIds: [], recentAdherence: null, ...over,
+  emphasis: 'maintain' as const, priorSameSlotCount: 0, lastSameSlotIds: [], recentAdherence: null,
+  lastByExercise: {}, ...over,
 })
 
-const bulk = buildMenu(args({ emphasis: 'bulk' }) as never)
-check('bulkは30分で3種目', bulk.items.length === 3)
-check('bulkは4セット', bulk.items[0].targetSets === 4)
-check('bulkのest≈27分', bulk.estMinutes === 27)
+// 2025-06-16 月曜=平日(27分), 2025-06-21 土曜=休日(42分)
+const bulkWeekday = buildMenu(args({ emphasis: 'bulk' }) as never)
+check('平日bulkは3種目', bulkWeekday.items.length === 3)
+check('bulkは4セット', bulkWeekday.items[0].targetSets === 4)
 
-const cut = buildMenu(args({ emphasis: 'cut' }) as never)
-check('cutは30分で4種目', cut.items.length === 4)
-check('cutのレップ12-15', cut.items[0].targetReps === '12-15')
+const cutWeekday = buildMenu(args({ emphasis: 'cut' }) as never)
+check('平日cutは3種目(27/7)', cutWeekday.items.length === 3)
+const cutWeekend = buildMenu(args({ date: '2025-06-21', emphasis: 'cut' }) as never)
+check('休日cutは6種目(42/7)', cutWeekend.items.length === 6)
+check('休日>平日の種目数', cutWeekend.items.length > cutWeekday.items.length)
+check('cutのレップ12-15', cutWeekday.items[0].targetReps === '12-15')
 
-const low = buildMenu(args({ emphasis: 'cut', recentAdherence: 0.4 }) as never)
-check('低達成で1種目減(3)', low.items.length === 3)
+const low = buildMenu(args({ date: '2025-06-21', emphasis: 'cut', recentAdherence: 0.4 }) as never)
+check('低達成で1種目減', low.items.length === 5)
+
+// --- 重量と漸進性過負荷 ---
+check('incrementは上半身2.5/脚5', incrementFor('push') === 2.5 && incrementFor('legs') === 5)
+const allDone: Record<string, { weightKg?: number; done: boolean }> = {}
+cols.forEach((x) => { allDone['p' + x] = { weightKg: 50, done: true } })
+const prog = buildMenu(args({ emphasis: 'bulk', lastByExercise: allDone }) as never)
+check('前回達成で+2.5kg提案', prog.items.every((i) => i.weightKg === 52.5))
+
+const allFail: Record<string, { weightKg?: number; done: boolean }> = {}
+cols.forEach((x) => { allFail['p' + x] = { weightKg: 50, done: false } })
+const stay = buildMenu(args({ emphasis: 'bulk', lastByExercise: allFail }) as never)
+check('未達は据え置き(50kg)', stay.items.every((i) => i.weightKg === 50))
+
+// 履歴なし → 種目の初期重量を採用
+const seeded: Record<Category, Exercise[]> = {
+  push: cols.map((x) => mkEx('p' + x, 'push', 40)), pull: byCat.pull, legs: byCat.legs,
+}
+const init = buildMenu(args({ emphasis: 'bulk', exercisesByCat: seeded }) as never)
+check('履歴なしは初期重量40kg', init.items.every((i) => i.weightKg === 40))
+check('MenuItemにcategory付与', init.items[0].category === 'push')
 
 // ローテで顔ぶれが変わる
-const r0 = buildMenu(args({ emphasis: 'bulk', priorSameSlotCount: 0 }) as never).items.map((i) => i.exerciseId).join(',')
-const r1 = buildMenu(args({ emphasis: 'bulk', priorSameSlotCount: 1 }) as never).items.map((i) => i.exerciseId).join(',')
-check('ローテで顔ぶれ変化', r0 !== r1)
+const ra = buildMenu(args({ emphasis: 'bulk', priorSameSlotCount: 0 }) as never).items.map((i) => i.exerciseId).join(',')
+const rb = buildMenu(args({ emphasis: 'bulk', priorSameSlotCount: 1 }) as never).items.map((i) => i.exerciseId).join(',')
+check('ローテで顔ぶれ変化', ra !== rb)
 
 // full スロットは複数カテゴリから採用
 const full = buildMenu(args({ date: '2025-06-16', settings: baseSettings({ weeklyFrequency: 3, splitPattern: p3 }) }) as never)
@@ -89,6 +115,25 @@ check('fullは複数部位から採用', full.slot === 'full' && cats.size >= 2)
 // rest 日
 const rest = buildMenu(args({ date: '2025-06-15' }) as never)
 check('休養は種目0+note', rest.slot === 'rest' && rest.items.length === 0 && !!rest.note)
+
+// --- 大きなプラン ---
+const planMetrics: BodyMetric[] = [
+  { date: '2025-05-18', bodyFatPct: 22, muscleKg: 30 },
+  { date: '2025-06-15', bodyFatPct: 20, muscleKg: 31 },
+]
+// 期限は4週間後
+const planSettings = baseSettings({ targetBodyFatPct: 15, targetMuscleKg: 33, targetDate: '2025-07-13' })
+const plan = buildPlan(planSettings, planMetrics, '2025-06-15')
+check('プランは目標あり', plan.hasTargets === true)
+check('残り週は4', Math.round(plan.weeksLeft ?? 0) === 4)
+check('体脂肪 残り5%', plan.fat?.remaining === 5)
+check('体脂肪 必要1.25%/週', plan.fat?.requiredPerWeek === 1.25)
+check('筋肉 残り2kg', plan.muscle?.remaining === 2)
+// 実ペース: 体脂肪は4週で2%減=0.5/週 < 必要1.25 → behind
+check('体脂肪はpace不足', plan.fat?.onTrack === false)
+// 目標到達済みは onTrack=true
+const reached = buildPlan(baseSettings({ targetBodyFatPct: 25 }), planMetrics, '2025-06-15')
+check('到達済みはonTrack', reached.fat?.remaining === 0 && reached.fat?.onTrack === true)
 
 // --- 集計 ---
 const settings = baseSettings()

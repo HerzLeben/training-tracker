@@ -31,7 +31,8 @@ export default function ExerciseManager() {
     <div className="space-y-3 rounded-2xl border border-slate-800 bg-slate-900 p-4">
       <div className="text-sm font-medium text-slate-300">Exercise catalog</div>
       <p className="text-xs text-slate-500">
-        Unchecked exercises are excluded from suggestions. You can add your own.
+        Unchecked exercises are excluded from suggestions. The kg field is the starting working
+        weight; it then progresses automatically as you train. You can add your own exercises too.
       </p>
 
       {SLOTS.map((s) => (
@@ -46,14 +47,30 @@ export default function ExerciseManager() {
                     type="checkbox"
                     checked={ex.enabled}
                     onChange={() => toggle(ex)}
-                    className="h-4 w-4 accent-sky-500"
+                    className="h-4 w-4 shrink-0 accent-sky-500"
                   />
-                  <span className={ex.enabled ? '' : 'text-slate-500 line-through'}>{ex.name}</span>
-                  <span className="text-xs text-slate-500">（{ex.muscle}）</span>
+                  <span className={`min-w-0 flex-1 truncate ${ex.enabled ? '' : 'text-slate-500 line-through'}`}>
+                    {ex.name}
+                    <span className="ml-1 text-xs text-slate-500">({ex.muscle})</span>
+                  </span>
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    step="2.5"
+                    value={ex.weightKg ?? ''}
+                    onChange={(e) =>
+                      upsertExercise({
+                        ...ex,
+                        weightKg: e.target.value === '' ? undefined : Number(e.target.value),
+                      })
+                    }
+                    placeholder="kg"
+                    className="w-16 rounded-lg border border-slate-700 bg-slate-800 px-2 py-1 text-right text-sm"
+                  />
                   {ex.isCustom && (
                     <button
                       onClick={() => deleteExercise(ex.id)}
-                      className="ml-auto text-xs text-rose-400"
+                      className="shrink-0 text-xs text-rose-400"
                     >
                       Delete
                     </button>

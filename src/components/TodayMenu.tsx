@@ -7,10 +7,11 @@ import MenuItemRow from './MenuItemRow'
 interface Props {
   menu: DailyMenu
   onToggle: (exerciseId: string, done: boolean) => void
+  onWeightChange: (exerciseId: string, weightKg: number) => void
   onRegenerate: () => void
 }
 
-export default function TodayMenu({ menu, onToggle, onRegenerate }: Props) {
+export default function TodayMenu({ menu, onToggle, onWeightChange, onRegenerate }: Props) {
   const pct = completion(menu)
   const doneCount = menu.items.filter((i) => i.done).length
 
@@ -62,6 +63,7 @@ export default function TodayMenu({ menu, onToggle, onRegenerate }: Props) {
             key={it.exerciseId}
             item={it}
             onToggle={(done) => onToggle(it.exerciseId, done)}
+            onWeightChange={(w) => onWeightChange(it.exerciseId, w)}
           />
         ))}
       </div>

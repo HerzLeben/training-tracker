@@ -2,14 +2,15 @@ import type { BodyMetric, Category, DailyMenu, Exercise, GoalType, MenuItem, Set
 import { slotForDate, categoriesForSlot } from './split'
 import { getMenu, putMenu, listMenus, listEnabledExercises, listMetrics } from '../db/repo'
 import { getSettings } from '../db/repo'
-import { diffDays } from '../lib/date'
+import { diffDays, isWeekend } from '../lib/date'
 
 // 動的なメニュー生成。
 // 入力 = 週の頻度（→スロット）・目標体脂肪/筋肉量と現在値の差（→方針）・直近達成（→微調整）。
-// 制約 = 筋トレ部分が約30分に収まる種目数/セット数にする。
-// ※今回も記録はチェックのみ（重量・レップは扱わない）。
+// 重量 = 種目ごとの現在ワーク重量＋漸進性過負荷（前回全達成で増量提案、Today で +/- 調整可）。
+// 時間 = 平日は短め(20-30分)・休日は長め(30-45分)に種目数を調整。
 
-const SESSION_BUDGET_MIN = 30 // 筋トレ部分の目安（分）
+const WEEKDAY_BUDGET_MIN = 27 // 平日（20-30分）
+const WEEKEND_BUDGET_MIN = 42 // 休日（30-45分）
 
 interface Scheme {
   sets: number
@@ -21,15 +22,18 @@ interface Scheme {
 function schemeFor(goal: GoalType): Scheme {
   switch (goal) {
     case 'bulk':
-      // 高重量・長め休息。1種目 ≈ 4セット → 約9分。
       return { sets: 4, reps: '8-12', perExerciseMin: 9 }
     case 'cut':
-      // 高回数・短め休息で種目数を確保。1種目 ≈ 3セット → 約7分。
       return { sets: 3, reps: '12-15', perExerciseMin: 7 }
     case 'maintain':
     default:
       return { sets: 3, reps: '10', perExerciseMin: 7 }
   }
+}
+
+/** 漸進性過負荷の増分(kg)。脚は大きめ、上半身は小さめ。 */
+export function incrementFor(category: Category): number {
+  return category === 'legs' ? 5 : 2.5
 }
 
 const REST_NOTE = 'Rest day. Recover with sleep and nutrition.'
@@ -59,18 +63,17 @@ export function latestBody(metrics: BodyMetric[]): { fat?: number; muscle?: numb
 export function deriveEmphasis(latest: { fat?: number; muscle?: number }, settings: Settings): GoalType {
   const fatGap =
     latest.fat !== undefined && settings.targetBodyFatPct !== undefined
-      ? latest.fat - settings.targetBodyFatPct // >0: 体脂肪を減らす必要
+      ? latest.fat - settings.targetBodyFatPct
       : null
   const muscleGap =
     latest.muscle !== undefined && settings.targetMuscleKg !== undefined
-      ? settings.targetMuscleKg - latest.muscle // >0: 筋肉を増やす必要
+      ? settings.targetMuscleKg - latest.muscle
       : null
 
   const fatScore = fatGap !== null && fatGap > 0 ? fatGap : 0
   const muscleScore = muscleGap !== null && muscleGap > 0 ? muscleGap : 0
   if (fatScore === 0 && muscleScore === 0) return 'maintain'
 
-  // 正規化（体脂肪 2% ≒ 筋肉 1kg を同程度の重みとして比較）。
   const fatNorm = fatScore / 2
   const muscleNorm = muscleScore / 1
   return fatNorm >= muscleNorm ? 'cut' : 'bulk'
@@ -122,6 +125,24 @@ function rotateSelect(pool: Exercise[], count: number, rotationIndex: number, la
   return chosen
 }
 
+/** 前回その種目で使った重量・達成状況。 */
+export interface LastLift {
+  weightKg?: number
+  done: boolean
+}
+
+/** 漸進性過負荷で次回ターゲット重量を決める。前回全達成なら増量、未達なら据え置き。 */
+function suggestWeight(ex: Exercise, last: LastLift | undefined): number | undefined {
+  if (!last) return ex.weightKg
+  const base = last.weightKg ?? ex.weightKg
+  if (base === undefined) return undefined
+  return last.done ? round(base + incrementFor(ex.slot)) : base
+}
+
+function round(n: number): number {
+  return Math.round(n * 10) / 10
+}
+
 /** メニューを純粋に組み立てる（DB 非依存）。 */
 export function buildMenu(params: {
   date: string
@@ -131,8 +152,18 @@ export function buildMenu(params: {
   priorSameSlotCount: number
   lastSameSlotIds: string[]
   recentAdherence: number | null
+  lastByExercise: Record<string, LastLift>
 }): DailyMenu {
-  const { date, settings, exercisesByCat, emphasis, priorSameSlotCount, lastSameSlotIds, recentAdherence } = params
+  const {
+    date,
+    settings,
+    exercisesByCat,
+    emphasis,
+    priorSameSlotCount,
+    lastSameSlotIds,
+    recentAdherence,
+    lastByExercise,
+  } = params
   const slot = slotForDate(date, settings.splitPattern)
 
   if (slot === 'rest') {
@@ -140,8 +171,8 @@ export function buildMenu(params: {
   }
 
   const scheme = schemeFor(emphasis)
-  // 30分枠に収まる種目数を算出し、直近達成で ±1 微調整。
-  const budgetCount = Math.floor(SESSION_BUDGET_MIN / scheme.perExerciseMin)
+  const budget = isWeekend(date) ? WEEKEND_BUDGET_MIN : WEEKDAY_BUDGET_MIN
+  const budgetCount = Math.floor(budget / scheme.perExerciseMin)
   const count = Math.max(2, budgetCount + volumeDelta(recentAdherence))
 
   const pool = balancedPool(categoriesForSlot(slot), exercisesByCat)
@@ -151,8 +182,10 @@ export function buildMenu(params: {
     exerciseId: e.id,
     name: e.name,
     muscle: e.muscle,
+    category: e.slot,
     targetSets: scheme.sets,
     targetReps: scheme.reps,
+    weightKg: suggestWeight(e, lastByExercise[e.id]),
     done: false,
   }))
   return {
@@ -173,6 +206,16 @@ function groupByCat(exercises: Exercise[]): Record<Category, Exercise[]> {
   const out: Record<Category, Exercise[]> = { push: [], pull: [], legs: [] }
   for (const e of exercises) out[e.slot].push(e)
   return out
+}
+
+/** 過去メニューから、種目ごとの「最後に使った重量・達成」を集める。 */
+export function lastLiftByExercise(history: DailyMenu[], before: string): Record<string, LastLift> {
+  const map: Record<string, LastLift> = {}
+  for (const m of [...history].sort((a, b) => a.date.localeCompare(b.date))) {
+    if (m.date >= before) continue
+    for (const it of m.items) map[it.exerciseId] = { weightKg: it.weightKg, done: it.done }
+  }
+  return map
 }
 
 /**
@@ -209,6 +252,7 @@ export async function ensureMenuForDate(
     priorSameSlotCount: sameSlotBefore.length,
     lastSameSlotIds: last ? last.items.map((i) => i.exerciseId) : [],
     recentAdherence: slot === 'rest' ? null : computeRecentAdherence(history, date),
+    lastByExercise: lastLiftByExercise(history, date),
   })
 
   await putMenu(menu)

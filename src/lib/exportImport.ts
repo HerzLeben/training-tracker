@@ -59,10 +59,10 @@ function csvCell(v: string | number | undefined): string {
 /** メニュー（達成記録）を種目1行で CSV 化。 */
 export async function exportMenusCSV(): Promise<void> {
   const menus = await db.menus.orderBy('date').toArray()
-  const rows = [['date', 'slot', 'exercise', 'muscle', 'sets', 'reps', 'done']]
+  const rows = [['date', 'slot', 'exercise', 'muscle', 'weightKg', 'sets', 'reps', 'done']]
   for (const m of menus) {
     if (m.items.length === 0) {
-      rows.push([m.date, m.slot, '', '', '', '', ''])
+      rows.push([m.date, m.slot, '', '', '', '', '', ''])
       continue
     }
     for (const it of m.items) {
@@ -71,6 +71,7 @@ export async function exportMenusCSV(): Promise<void> {
         m.slot,
         it.name,
         it.muscle,
+        it.weightKg === undefined ? '' : String(it.weightKg),
         String(it.targetSets),
         it.targetReps,
         it.done ? '1' : '0',

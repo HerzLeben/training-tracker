@@ -21,6 +21,8 @@ export interface Exercise {
   isCustom: boolean
   /** 提案対象に含めるか。 */
   enabled: boolean
+  /** 現在のワーク重量(kg)。初期値はカタログで入力、漸進性過負荷で更新。 */
+  weightKg?: number
 }
 
 /** 設定（単一レコード, id = 'app'）。 */
@@ -32,6 +34,8 @@ export interface Settings {
   targetBodyFatPct?: number
   /** 目標筋肉量(kg)。現在値との差で筋肥大寄りかを判定。 */
   targetMuscleKg?: number
+  /** 目標の達成期限（YYYY-MM-DD）。プラン要約の必要ペース算出に使う。 */
+  targetDate?: string
   /** 曜日(0..6)→スロットの割り当て（weeklyFrequency から自動生成）。 */
   splitPattern: Slot[]
 }
@@ -41,9 +45,13 @@ export interface MenuItem {
   exerciseId: string
   name: string
   muscle: string
+  /** push/pull/legs。重量の増分計算などに使う。 */
+  category: Category
   targetSets: number
   /** 例: "8-12"。 */
   targetReps: string
+  /** その日のターゲット重量(kg)。漸進性過負荷で提案、Today で +/- 調整可。 */
+  weightKg?: number
   done: boolean
 }
 
