@@ -9,6 +9,7 @@ import {
   monthView,
 } from '../src/lib/adherence.ts'
 import { formatSessionText, formatWeeklyText } from '../src/lib/share.ts'
+import { parseMetricsCSV } from '../src/lib/csv.ts'
 import { buildPlan } from '../src/lib/plan.ts'
 import type { BodyMetric, DailyMenu, PrescribedExercise, Settings, Workout } from '../src/types/index.ts'
 
@@ -107,6 +108,21 @@ check('プラン: 目標あり', plan.hasTargets === true)
 check('プラン: 残り週4', Math.round(plan.weeksLeft ?? 0) === 4)
 check('プラン: 体脂肪 残り5', plan.fat?.remaining === 5)
 check('プラン: 筋肉 残り2', plan.muscle?.remaining === 2)
+
+// --- CSV 取り込み ---
+const csv = 'date,weightKg,bodyFatPct,muscleKg\n2026-06-01,70.5,18.2,32.1\n2026-06-08,70.0,,32.4\n,,,\n2026-06-15,69.4,17.5,'
+const parsed = parseMetricsCSV(csv)
+check('CSV: 3行取り込み', parsed.length === 3)
+check('CSV: 値の解釈', parsed[0].weightKg === 70.5 && parsed[0].bodyFatPct === 18.2 && parsed[0].muscleKg === 32.1)
+check('CSV: 空セルは undefined', parsed[1].bodyFatPct === undefined && parsed[1].muscleKg === 32.4)
+check('CSV: 末尾欠損OK', parsed[2].date === '2026-06-15' && parsed[2].muscleKg === undefined)
+check('CSV: 列順・別名に追従', (() => {
+  const p = parseMetricsCSV('Date,Muscle,Weight\n2026-07-01,33,71')
+  return p.length === 1 && p[0].muscleKg === 33 && p[0].weightKg === 71
+})())
+let threw = false
+try { parseMetricsCSV('weight,fat\n70,18') } catch { threw = true }
+check('CSV: date 列なしはエラー', threw)
 
 console.log(`\n${pass} passed, ${fail} failed`)
 process.exit(fail === 0 ? 0 : 1)

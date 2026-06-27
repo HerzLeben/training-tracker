@@ -1,5 +1,6 @@
 import { db } from '../db/db'
 import type { DailyMenu, Settings, Workout, BodyMetric } from '../types'
+import { parseMetricsCSV } from './csv'
 
 // データ所有のための入出力。全データの JSON 往復と、CSV エクスポート。
 
@@ -88,6 +89,13 @@ export async function exportMetricsCSV(): Promise<void> {
     rows.push([m.date, csvCell(m.weightKg), csvCell(m.bodyFatPct), csvCell(m.muscleKg)])
   const csv = rows.map((r) => r.map(csvCell).join(',')).join('\n')
   download(`body-metrics-${stamp()}.csv`, csv, 'text/csv')
+}
+
+/** 体組成 CSV を取り込み（同日付は上書き）。取り込んだ件数を返す。 */
+export async function importMetricsCSV(text: string): Promise<number> {
+  const metrics = parseMetricsCSV(text)
+  if (metrics.length) await db.metrics.bulkPut(metrics)
+  return metrics.length
 }
 
 /** JSON バックアップを取り込み（マージ）。件数を返す。 */

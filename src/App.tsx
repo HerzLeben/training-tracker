@@ -3,8 +3,8 @@ import BottomNav from './components/BottomNav'
 
 export default function App() {
   return (
-    <div className="mx-auto flex min-h-full max-w-md flex-col">
-      <main className="safe-top flex-1 pb-24">
+    <div className="mx-auto flex h-full max-w-md flex-col overflow-hidden">
+      <main className="safe-top flex-1 overflow-y-auto pb-6">
         <Outlet />
       </main>
       <BottomNav />

@@ -10,6 +10,10 @@ export class AppDB extends Dexie {
 
   constructor() {
     super('training-tracker')
+    // 重要: マイグレーションは「追加のみ」。menus/metrics/workouts のデータは
+    // 今後のアップデートでも削除しないこと（ユーザーのデータを飛ばさないため）。
+    // 新フィールドは optional で追加し、ストアの再作成・削除は避ける。
+    //
     // v1: exercises ベースの自動生成モデル（廃止）。
     this.version(1).stores({
       exercises: 'id, slot, enabled',
