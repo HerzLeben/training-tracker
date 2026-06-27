@@ -26,23 +26,23 @@ export default function BodyTrendChart({ metrics }: Props) {
 
   return (
     <div className={`${CARD} p-3`}>
-      <div className="mb-2 px-1 text-sm font-medium text-slate-300">Body trend</div>
+      <div className="mb-2 px-1 text-sm font-medium text-slate-700">Body trend</div>
       <ResponsiveContainer width="100%" height={220}>
         <LineChart data={data} margin={{ top: 5, right: 8, left: -20, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-          <XAxis dataKey="label" stroke="#64748b" fontSize={11} />
-          <YAxis yAxisId="w" stroke="#38bdf8" fontSize={11} />
-          <YAxis yAxisId="f" orientation="right" stroke="#f472b6" fontSize={11} />
+          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+          <XAxis dataKey="label" stroke="#94a3b8" fontSize={11} />
+          <YAxis yAxisId="w" stroke="#0ea5e9" fontSize={11} />
+          <YAxis yAxisId="f" orientation="right" stroke="#ec4899" fontSize={11} />
           <Tooltip
-            contentStyle={{ background: '#0f172a', border: '1px solid #1e293b', borderRadius: 8 }}
-            labelStyle={{ color: '#cbd5e1' }}
+            contentStyle={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8 }}
+            labelStyle={{ color: '#475569' }}
           />
           <Line
             yAxisId="w"
             type="monotone"
             dataKey="weight"
             name="Weight (kg)"
-            stroke="#38bdf8"
+            stroke="#0ea5e9"
             strokeWidth={2}
             connectNulls
             dot={{ r: 2 }}
@@ -52,7 +52,7 @@ export default function BodyTrendChart({ metrics }: Props) {
             type="monotone"
             dataKey="muscle"
             name="Muscle (kg)"
-            stroke="#34d399"
+            stroke="#10b981"
             strokeWidth={2}
             connectNulls
             dot={{ r: 2 }}
@@ -62,7 +62,7 @@ export default function BodyTrendChart({ metrics }: Props) {
             type="monotone"
             dataKey="fat"
             name="Body fat (%)"
-            stroke="#f472b6"
+            stroke="#ec4899"
             strokeWidth={2}
             connectNulls
             dot={{ r: 2 }}

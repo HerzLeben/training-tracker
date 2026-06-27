@@ -12,7 +12,7 @@ export default function ProgressPage() {
   const metrics = useMetrics()
 
   if (!settings || !menus || !metrics) {
-    return <div className="text-slate-400">Loading…</div>
+    return <div className="text-slate-500">Loading…</div>
   }
 
   const shareWeekly = () => void shareText(formatWeeklyText(menus))
@@ -21,12 +21,12 @@ export default function ProgressPage() {
     <div className="space-y-4">
       <header className="flex items-start justify-between">
         <div>
-          <h1 className="text-xl font-bold">Progress</h1>
-          <p className="text-sm text-slate-400">Your training history</p>
+          <h1 className="text-xl font-bold text-slate-800">Progress</h1>
+          <p className="text-sm text-slate-500">Your training history</p>
         </div>
         <button
           onClick={shareWeekly}
-          className="rounded-xl bg-emerald-600 px-3 py-2 text-sm font-medium active:bg-emerald-700"
+          className="rounded-xl bg-emerald-600 px-3 py-2 text-sm font-medium text-white active:bg-emerald-700"
         >
           Share week
         </button>

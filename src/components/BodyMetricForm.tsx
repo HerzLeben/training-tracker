@@ -32,12 +32,12 @@ export default function BodyMetricForm() {
   return (
     <form onSubmit={submit} className={`space-y-3 ${CARD} p-4`}>
       <div>
-        <label className="mb-1 block text-xs text-slate-400">Date</label>
+        <label className="mb-1 block text-xs text-slate-500">Date</label>
         <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={field} />
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="mb-1 block text-xs text-slate-400">Weight (kg)</label>
+          <label className="mb-1 block text-xs text-slate-500">Weight (kg)</label>
           <input
             type="number"
             inputMode="decimal"
@@ -49,7 +49,7 @@ export default function BodyMetricForm() {
           />
         </div>
         <div>
-          <label className="mb-1 block text-xs text-slate-400">Body fat (%)</label>
+          <label className="mb-1 block text-xs text-slate-500">Body fat (%)</label>
           <input
             type="number"
             inputMode="decimal"
@@ -62,7 +62,7 @@ export default function BodyMetricForm() {
         </div>
       </div>
       <div>
-        <label className="mb-1 block text-xs text-slate-400">Muscle mass (kg)</label>
+        <label className="mb-1 block text-xs text-slate-500">Muscle mass (kg)</label>
         <input
           type="number"
           inputMode="decimal"
@@ -73,10 +73,10 @@ export default function BodyMetricForm() {
           className={field}
         />
       </div>
-      <button className="w-full rounded-xl bg-sky-600 py-2 font-medium active:bg-sky-700">
+      <button className="w-full rounded-xl bg-emerald-600 py-2 font-medium text-white active:bg-emerald-700">
         Save
       </button>
-      {msg && <p className="text-center text-sm text-emerald-400">{msg}</p>}
+      {msg && <p className="text-center text-sm text-emerald-600">{msg}</p>}
     </form>
   )
 }

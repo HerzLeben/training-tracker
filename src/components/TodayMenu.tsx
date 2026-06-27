@@ -1,6 +1,7 @@
 import type { DailyMenu } from '../types'
 import { completion } from '../lib/adherence'
 import { toPct } from '../lib/number'
+import { BTN_PRIMARY, BTN_SECONDARY } from '../lib/styles'
 import MenuItemRow from './MenuItemRow'
 
 interface Props {
@@ -19,18 +20,18 @@ export default function TodayMenu({ menu, onToggle, onResult, onShare, onChangeW
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div>
-          <div className="text-sm text-slate-400">Today's workout</div>
-          <h2 className="text-lg font-semibold">{menu.workoutName ?? 'Session'}</h2>
+          <div className="text-sm text-slate-500">Today's workout</div>
+          <h2 className="text-lg font-semibold text-slate-800">{menu.workoutName ?? 'Session'}</h2>
         </div>
         <div className="text-right">
-          <div className="text-2xl font-bold text-sky-400">{pct === null ? '—' : `${toPct(pct)}%`}</div>
-          <div className="text-xs text-slate-400">
+          <div className="text-2xl font-bold text-emerald-600">{pct === null ? '—' : `${toPct(pct)}%`}</div>
+          <div className="text-xs text-slate-500">
             {doneCount}/{menu.items.length} exercises
           </div>
         </div>
       </div>
 
-      <div className="h-2 overflow-hidden rounded-full bg-slate-800">
+      <div className="h-2 overflow-hidden rounded-full bg-slate-100">
         <div
           className="h-full rounded-full bg-emerald-500 transition-all"
           style={{ width: `${toPct(pct ?? 0)}%` }}
@@ -49,16 +50,10 @@ export default function TodayMenu({ menu, onToggle, onResult, onShare, onChangeW
       </div>
 
       <div className="grid grid-cols-2 gap-2">
-        <button
-          onClick={onChangeWorkout}
-          className="rounded-xl border border-slate-800 py-2 text-sm text-slate-400 active:bg-slate-800"
-        >
+        <button onClick={onChangeWorkout} className={`${BTN_SECONDARY} py-2 text-sm`}>
           Change workout
         </button>
-        <button
-          onClick={onShare}
-          className="rounded-xl bg-emerald-600 py-2 text-sm font-medium active:bg-emerald-700"
-        >
+        <button onClick={onShare} className={`${BTN_PRIMARY} py-2 text-sm font-medium`}>
           Share to LINE
         </button>
       </div>

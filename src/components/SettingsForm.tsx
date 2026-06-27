@@ -31,13 +31,13 @@ export default function SettingsForm() {
 
   return (
     <div className={`space-y-3 ${CARD} p-4`}>
-      <div className="text-sm font-medium text-slate-300">Goals (body composition)</div>
-      <p className="text-xs text-slate-500">
+      <div className="text-sm font-medium text-slate-700">Goals (body composition)</div>
+      <p className="text-xs text-slate-400">
         Used for the plan card. Compared against your latest values on the Body tab.
       </p>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="mb-1 block text-xs text-slate-400">Target body fat (%)</label>
+          <label className="mb-1 block text-xs text-slate-500">Target body fat (%)</label>
           <input
             type="number"
             inputMode="decimal"
@@ -50,7 +50,7 @@ export default function SettingsForm() {
           />
         </div>
         <div>
-          <label className="mb-1 block text-xs text-slate-400">Target muscle (kg)</label>
+          <label className="mb-1 block text-xs text-slate-500">Target muscle (kg)</label>
           <input
             type="number"
             inputMode="decimal"
@@ -64,7 +64,7 @@ export default function SettingsForm() {
         </div>
       </div>
       <div>
-        <label className="mb-1 block text-xs text-slate-400">Target date (by when)</label>
+        <label className="mb-1 block text-xs text-slate-500">Target date (by when)</label>
         <input
           type="date"
           value={date}

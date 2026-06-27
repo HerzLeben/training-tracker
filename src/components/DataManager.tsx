@@ -21,18 +21,18 @@ export default function DataManager() {
     }
   }
 
-  const btn = 'w-full rounded-xl border border-slate-700 py-2 text-sm active:bg-slate-800'
+  const btn = 'w-full rounded-xl border border-slate-300 bg-white py-2 text-sm text-slate-700 active:bg-slate-50'
 
   return (
     <div className={`space-y-2 ${CARD} p-4`}>
-      <div className="text-sm font-medium text-slate-300">Data</div>
-      <p className="text-xs text-slate-500">All data is stored on this device. Back it up or restore it here.</p>
+      <div className="text-sm font-medium text-slate-700">Data</div>
+      <p className="text-xs text-slate-400">All data is stored on this device. Back it up or restore it here.</p>
       <button onClick={() => exportJSON()} className={btn}>Export JSON (backup)</button>
       <button onClick={() => exportMenusCSV()} className={btn}>Export menus as CSV</button>
       <button onClick={() => exportMetricsCSV()} className={btn}>Export body metrics as CSV</button>
       <button onClick={() => fileRef.current?.click()} className={btn}>Import JSON (restore)</button>
       <input ref={fileRef} type="file" accept="application/json" onChange={onImport} className="hidden" />
-      {msg && <p className="text-center text-sm text-emerald-400">{msg}</p>}
+      {msg && <p className="text-center text-sm text-emerald-600">{msg}</p>}
     </div>
   )
 }

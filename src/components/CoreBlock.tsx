@@ -15,12 +15,12 @@ export default function CoreBlock({ items, streak, onToggle }: Props) {
     <div className={`space-y-2 ${CARD} p-4`}>
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="font-semibold">Core</h3>
-          <p className="text-xs text-slate-400">Daily — Plank every day</p>
+          <h3 className="font-semibold text-slate-800">Core</h3>
+          <p className="text-xs text-slate-500">Daily — Plank every day</p>
         </div>
         <div className="text-right">
-          <div className="text-sm font-bold text-orange-400">🔥 {streak}</div>
-          <div className="text-[11px] text-slate-500">
+          <div className="text-sm font-bold text-orange-500">🔥 {streak}</div>
+          <div className="text-[11px] text-slate-400">
             {doneCount}/{items.length} done
           </div>
         </div>
@@ -36,18 +36,18 @@ export default function CoreBlock({ items, streak, onToggle }: Props) {
               type="checkbox"
               checked={it.done}
               onChange={(e) => onToggle(it.exerciseId, e.target.checked)}
-              className="h-6 w-6 shrink-0 accent-emerald-500"
+              className="h-6 w-6 shrink-0 accent-emerald-600"
             />
             <div className="min-w-0 flex-1">
-              <div className={`truncate font-medium ${it.done ? 'text-emerald-300 line-through' : ''}`}>
+              <div className={`truncate font-medium ${it.done ? 'text-emerald-700 line-through' : 'text-slate-800'}`}>
                 {it.name}
                 {it.daily && (
-                  <span className="ml-2 rounded bg-slate-800 px-1.5 py-0.5 text-[10px] text-sky-300">
+                  <span className="ml-2 rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] text-emerald-600">
                     daily
                   </span>
                 )}
               </div>
-              <div className="text-xs text-slate-400">
+              <div className="text-xs text-slate-500">
                 {it.targetSets} × {it.targetReps}
                 {it.muscle ? ` · ${it.muscle}` : ''}
               </div>

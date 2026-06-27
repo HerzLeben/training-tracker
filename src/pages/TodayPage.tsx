@@ -33,8 +33,8 @@ export default function TodayPage() {
   return (
     <div className="space-y-4">
       <header>
-        <h1 className="text-xl font-bold">Today's Training</h1>
-        <p className="text-sm text-slate-400">
+        <h1 className="text-xl font-bold text-slate-800">Today's Training</h1>
+        <p className="text-sm text-slate-500">
           {today} ({wd})
         </p>
       </header>
@@ -43,10 +43,10 @@ export default function TodayPage() {
         <div className={`${CARD} p-6 text-center text-slate-400`}>Loading…</div>
       ) : workouts.length === 0 ? (
         <div className={`${CARD} space-y-2 p-6 text-center`}>
-          <p className="text-slate-300">No program yet.</p>
+          <p className="text-slate-700">No program yet.</p>
           <p className="text-sm text-slate-500">
             Add your trainer's program in{' '}
-            <Link to="/settings" className="text-sky-400 underline">
+            <Link to="/settings" className="font-medium text-emerald-600 underline">
               Settings
             </Link>
             , then pick today's workout here.
@@ -54,23 +54,23 @@ export default function TodayPage() {
         </div>
       ) : showPicker ? (
         <div className={`${CARD} space-y-2 p-4`}>
-          <div className="text-sm font-medium text-slate-300">
+          <div className="text-sm font-medium text-slate-700">
             {menu ? "Switch workout (resets today's records)" : "Pick today's workout"}
           </div>
           {workouts.map((w) => (
             <button
               key={w.id}
               onClick={() => pick(w)}
-              className="w-full rounded-xl border border-slate-700 px-3 py-3 text-left active:bg-slate-800"
+              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-left active:bg-slate-50"
             >
-              <div className="font-medium">{w.name}</div>
+              <div className="font-medium text-slate-800">{w.name}</div>
               <div className="text-xs text-slate-500">{w.items.length} exercises</div>
             </button>
           ))}
           {menu && (
             <button
               onClick={() => setPicking(false)}
-              className="w-full rounded-xl py-2 text-sm text-slate-400 active:bg-slate-800"
+              className="w-full rounded-xl py-2 text-sm text-slate-500 active:bg-slate-50"
             >
               Cancel
             </button>

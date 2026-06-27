@@ -20,18 +20,18 @@ export default function AdherenceChart({ menus }: Props) {
 
   return (
     <div className={`${CARD} p-3`}>
-      <div className="mb-2 px-1 text-sm font-medium text-slate-300">Completion trend</div>
+      <div className="mb-2 px-1 text-sm font-medium text-slate-700">Completion trend</div>
       <ResponsiveContainer width="100%" height={200}>
         <LineChart data={data} margin={{ top: 5, right: 8, left: -20, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-          <XAxis dataKey="label" stroke="#64748b" fontSize={11} />
-          <YAxis domain={[0, 100]} stroke="#64748b" fontSize={11} />
+          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+          <XAxis dataKey="label" stroke="#94a3b8" fontSize={11} />
+          <YAxis domain={[0, 100]} stroke="#94a3b8" fontSize={11} />
           <Tooltip
-            contentStyle={{ background: '#0f172a', border: '1px solid #1e293b', borderRadius: 8 }}
-            labelStyle={{ color: '#cbd5e1' }}
+            contentStyle={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 8 }}
+            labelStyle={{ color: '#475569' }}
             formatter={(v: number) => [`${v}%`, 'Completion']}
           />
-          <Line type="monotone" dataKey="pct" stroke="#38bdf8" strokeWidth={2} dot={{ r: 2 }} />
+          <Line type="monotone" dataKey="pct" stroke="#10b981" strokeWidth={2} dot={{ r: 2 }} />
         </LineChart>
       </ResponsiveContainer>
     </div>

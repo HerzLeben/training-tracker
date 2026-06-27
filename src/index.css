@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 html,
@@ -13,7 +13,7 @@ body,
 }
 
 body {
-  @apply bg-slate-950 text-slate-100;
+  @apply bg-[#f4f8f5] text-slate-800;
   margin: 0;
   -webkit-tap-highlight-color: transparent;
 }

@@ -6,8 +6,8 @@ export default function SettingsPage() {
   return (
     <div className="space-y-4">
       <header>
-        <h1 className="text-xl font-bold">Settings</h1>
-        <p className="text-sm text-slate-400">Program, goals & data</p>
+        <h1 className="text-xl font-bold text-slate-800">Settings</h1>
+        <p className="text-sm text-slate-500">Program, goals & data</p>
       </header>
       <ProgramEditor />
       <SettingsForm />

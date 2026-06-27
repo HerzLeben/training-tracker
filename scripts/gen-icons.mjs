@@ -9,8 +9,8 @@ const here = dirname(fileURLToPath(import.meta.url))
 const outDir = join(here, '..', 'public', 'icons')
 mkdirSync(outDir, { recursive: true })
 
-const BG = [15, 23, 42, 255]      // #0f172a
-const FG = [56, 189, 248, 255]    // #38bdf8
+const BG = [16, 185, 129, 255]    // emerald-500 #10b981
+const FG = [255, 255, 255, 255]   // white
 
 function crc32(buf) {
   let c = ~0

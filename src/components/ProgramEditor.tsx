@@ -3,7 +3,7 @@ import { upsertWorkout, deleteWorkout, setDailyCore } from '../db/repo'
 import { useWorkouts, useSettings } from '../db/hooks'
 import { CARD } from '../lib/styles'
 
-const numInput = 'rounded-lg border border-slate-700 bg-slate-800 px-2 py-1 text-sm'
+const numInput = 'rounded-lg border border-slate-300 bg-white px-2 py-1 text-sm text-slate-800 placeholder:text-slate-400'
 
 const newItem = (): PrescribedExercise => ({
   id: `ex-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
@@ -39,7 +39,7 @@ function ExerciseRow({
         className={`w-11 text-center ${numInput}`}
         aria-label="sets"
       />
-      <span className="text-xs text-slate-500">×</span>
+      <span className="text-xs text-slate-400">×</span>
       <input
         value={item.targetReps}
         onChange={(e) => onChange({ targetReps: e.target.value })}
@@ -59,7 +59,7 @@ function ExerciseRow({
         className={`w-14 text-right ${numInput}`}
         aria-label="target weight"
       />
-      <button onClick={onDelete} className="px-1 text-rose-400" aria-label="delete exercise">
+      <button onClick={onDelete} className="px-1 text-rose-500" aria-label="delete exercise">
         ×
       </button>
     </div>
@@ -73,7 +73,7 @@ function WorkoutCard({ workout }: { workout: Workout }) {
   const deleteItem = (id: string) => update({ items: workout.items.filter((it) => it.id !== id) })
 
   return (
-    <div className="space-y-2 rounded-xl border border-slate-800 bg-slate-950/40 p-3">
+    <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
       <div className="flex items-center gap-2">
         <input
           value={workout.name}
@@ -83,7 +83,7 @@ function WorkoutCard({ workout }: { workout: Workout }) {
         />
         <button
           onClick={() => void deleteWorkout(workout.id)}
-          className="shrink-0 text-xs text-rose-400"
+          className="shrink-0 text-xs text-rose-500"
         >
           Delete
         </button>
@@ -100,7 +100,7 @@ function WorkoutCard({ workout }: { workout: Workout }) {
       </div>
       <button
         onClick={() => update({ items: [...workout.items, newItem()] })}
-        className="w-full rounded-lg border border-dashed border-slate-700 py-1.5 text-xs text-slate-400 active:bg-slate-800"
+        className="w-full rounded-lg border border-dashed border-slate-300 py-1.5 text-xs text-slate-500 active:bg-slate-100"
       >
         + Add exercise
       </button>
@@ -122,8 +122,8 @@ export default function ProgramEditor() {
   return (
     <div className="space-y-4">
       <div className={`space-y-3 ${CARD} p-4`}>
-        <div className="text-sm font-medium text-slate-300">Program (from your trainer)</div>
-        <p className="text-xs text-slate-500">
+        <div className="text-sm font-medium text-slate-700">Program (from your trainer)</div>
+        <p className="text-xs text-slate-400">
           Add each workout day with its exercises and target sets × reps @ weight. You then pick one
           on the Today tab and log your results.
         </p>
@@ -132,15 +132,15 @@ export default function ProgramEditor() {
         ))}
         <button
           onClick={addWorkout}
-          className="w-full rounded-xl bg-slate-700 py-2 text-sm active:bg-slate-600"
+          className="w-full rounded-xl bg-slate-100 py-2 text-sm font-medium text-slate-700 active:bg-slate-200"
         >
           + Add workout
         </button>
       </div>
 
       <div className={`space-y-2 ${CARD} p-4`}>
-        <div className="text-sm font-medium text-slate-300">Daily core</div>
-        <p className="text-xs text-slate-500">Shown every day on the Today tab.</p>
+        <div className="text-sm font-medium text-slate-700">Daily core</div>
+        <p className="text-xs text-slate-400">Shown every day on the Today tab.</p>
         <div className="space-y-1.5">
           {core.map((it) => (
             <ExerciseRow
@@ -153,7 +153,7 @@ export default function ProgramEditor() {
         </div>
         <button
           onClick={() => updateCore([...core, { ...newItem(), targetReps: '45–60s', category: 'core' }])}
-          className="w-full rounded-lg border border-dashed border-slate-700 py-1.5 text-xs text-slate-400 active:bg-slate-800"
+          className="w-full rounded-lg border border-dashed border-slate-300 py-1.5 text-xs text-slate-500 active:bg-slate-100"
         >
           + Add core exercise
         </button>

@@ -3,7 +3,7 @@ import type { DailyMenu } from '../types'
 import { monthView } from '../lib/adherence'
 import { todayISO, weekdayLabel } from '../lib/date'
 import { toPct } from '../lib/number'
-import { CARD } from '../lib/styles'
+import { CARD, STATUS_BG } from '../lib/styles'
 
 interface Props {
   menus: DailyMenu[]
@@ -14,13 +14,6 @@ const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December',
 ]
-
-const dayStyle: Record<string, string> = {
-  done: 'bg-emerald-500 text-slate-950',
-  partial: 'bg-amber-500 text-slate-950',
-  none: 'bg-slate-800 text-slate-500',
-  future: 'bg-slate-900 text-slate-600',
-}
 
 export default function MonthCalendar({ menus }: Props) {
   const now = todayISO()
@@ -38,21 +31,21 @@ export default function MonthCalendar({ menus }: Props) {
   return (
     <div className={`${CARD} p-4`}>
       <div className="mb-3 flex items-center justify-between">
-        <button onClick={() => shift(-1)} className="rounded-lg px-2 py-1 text-slate-400 active:bg-slate-800">
+        <button onClick={() => shift(-1)} className="rounded-lg px-2 py-1 text-slate-400 active:bg-slate-100">
           ‹
         </button>
         <div className="text-center">
-          <div className="text-sm font-medium text-slate-200">
+          <div className="text-sm font-medium text-slate-700">
             {MONTHS[view.month]} {view.year}
           </div>
-          <div className="text-[11px] text-slate-500">
+          <div className="text-[11px] text-slate-400">
             {data.doneCount}/{data.sessionCount} sessions done
           </div>
         </div>
         <button
           onClick={() => shift(1)}
           disabled={isCurrentMonth}
-          className="rounded-lg px-2 py-1 text-slate-400 active:bg-slate-800 disabled:opacity-30"
+          className="rounded-lg px-2 py-1 text-slate-400 active:bg-slate-100 disabled:opacity-30"
         >
           ›
         </button>
@@ -60,7 +53,7 @@ export default function MonthCalendar({ menus }: Props) {
 
       <div className="mb-1 grid grid-cols-7 gap-1">
         {WEEKDAYS.map((wd) => (
-          <div key={wd} className="text-center text-[10px] text-slate-500">
+          <div key={wd} className="text-center text-[10px] text-slate-400">
             {weekdayLabel(wd)}
           </div>
         ))}
@@ -75,8 +68,8 @@ export default function MonthCalendar({ menus }: Props) {
               key={c.date}
               title={`${c.date}${c.pct === null ? '' : ' · ' + toPct(c.pct) + '%'}`}
               className={`flex aspect-square flex-col items-center justify-center rounded-lg text-xs ${
-                dayStyle[c.status]
-              } ${c.date === now ? 'ring-2 ring-sky-400' : ''}`}
+                STATUS_BG[c.status]
+              } ${c.date === now ? 'ring-2 ring-emerald-500' : ''}`}
             >
               {c.day}
             </div>
@@ -84,10 +77,10 @@ export default function MonthCalendar({ menus }: Props) {
         )}
       </div>
 
-      <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-slate-500">
+      <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-slate-400">
         <span><span className="mr-1 inline-block h-2 w-2 rounded-sm bg-emerald-500" />Done</span>
-        <span><span className="mr-1 inline-block h-2 w-2 rounded-sm bg-amber-500" />Partial</span>
-        <span><span className="mr-1 inline-block h-2 w-2 rounded-sm bg-slate-800" />No session</span>
+        <span><span className="mr-1 inline-block h-2 w-2 rounded-sm bg-amber-400" />Partial</span>
+        <span><span className="mr-1 inline-block h-2 w-2 rounded-sm bg-slate-200" />No session</span>
       </div>
     </div>
   )
