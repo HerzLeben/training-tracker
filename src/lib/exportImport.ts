@@ -32,8 +32,25 @@ async function collect(): Promise<Backup> {
   }
 }
 
-function download(filename: string, content: string, mime: string): void {
+/**
+ * ファイルを保存/共有する。モバイルでは共有シート（navigator.share）を優先し、
+ * Google Drive アプリや「ファイルに保存 → Google Drive」へ直接出せるようにする。
+ * 非対応（多くの PC）では通常のダウンロードにフォールバック。
+ */
+async function saveFile(filename: string, content: string, mime: string): Promise<void> {
   const blob = new Blob([content], { type: mime })
+  const file = new File([blob], filename, { type: mime })
+
+  if (typeof navigator !== 'undefined' && navigator.canShare?.({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: filename })
+      return
+    } catch (err) {
+      // キャンセルはそのまま終了。それ以外はダウンロードにフォールバック。
+      if (err instanceof DOMException && err.name === 'AbortError') return
+    }
+  }
+
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
@@ -48,7 +65,7 @@ const stamp = () => new Date().toISOString().slice(0, 10)
 
 export async function exportJSON(): Promise<void> {
   const data = await collect()
-  download(`training-backup-${stamp()}.json`, JSON.stringify(data, null, 2), 'application/json')
+  await saveFile(`training-backup-${stamp()}.json`, JSON.stringify(data, null, 2), 'application/json')
 }
 
 function csvCell(v: string | number | undefined): string {
@@ -78,7 +95,7 @@ export async function exportMenusCSV(): Promise<void> {
     }
   }
   const csv = rows.map((r) => r.map(csvCell).join(',')).join('\n')
-  download(`training-results-${stamp()}.csv`, csv, 'text/csv')
+  await saveFile(`training-results-${stamp()}.csv`, csv, 'text/csv')
 }
 
 /** 体組成を CSV 化。 */
@@ -88,7 +105,7 @@ export async function exportMetricsCSV(): Promise<void> {
   for (const m of metrics)
     rows.push([m.date, csvCell(m.weightKg), csvCell(m.bodyFatPct), csvCell(m.muscleKg)])
   const csv = rows.map((r) => r.map(csvCell).join(',')).join('\n')
-  download(`body-metrics-${stamp()}.csv`, csv, 'text/csv')
+  await saveFile(`body-metrics-${stamp()}.csv`, csv, 'text/csv')
 }
 
 /** 体組成 CSV を取り込み（同日付は上書き）。取り込んだ件数を返す。 */

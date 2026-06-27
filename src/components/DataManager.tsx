@@ -44,9 +44,10 @@ export default function DataManager() {
     <div className={`space-y-2 ${CARD} p-4`}>
       <div className="text-sm font-medium text-slate-700">Data</div>
       <p className="text-xs text-slate-400">
-        Data is stored on this device (and kept across app updates). Back it up or restore it here.
+        Stored on this device (kept across app updates). On a phone, the buttons below open the share
+        sheet — pick <span className="font-medium">Google Drive</span> or “Save to Files” to keep a backup.
       </p>
-      <button onClick={() => exportJSON()} className={btn}>Export JSON (backup)</button>
+      <button onClick={() => exportJSON()} className={btn}>Backup JSON (save / share)</button>
       <button onClick={() => exportMenusCSV()} className={btn}>Export results as CSV</button>
       <button onClick={() => exportMetricsCSV()} className={btn}>Export body metrics as CSV</button>
       <button onClick={() => jsonRef.current?.click()} className={btn}>Import JSON (restore)</button>
