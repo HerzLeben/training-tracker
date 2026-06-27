@@ -85,15 +85,16 @@ const shareSession: DailyMenu = {
 }
 const st = formatSessionText(shareSession)
 check('共有: ワークアウト名', st.includes('Push'))
-check('共有: 実績(重量×回数)', st.includes('62.5kg × 10'))
-check('共有: 目標表記', st.includes('target 3×10 @60kg'))
+check('共有: 実績(重量×回数)', st.includes('62.5kg × 10回'))
+check('共有: 目標表記', st.includes('目標 3×10 @60kg'))
 check('共有: コア行', st.includes('Plank'))
-check('共有: 達成率', st.includes('Completion: 1/2 (50%)'))
+check('共有: 曜日(日本語)', st.includes('(土)'))
+check('共有: 達成率', st.includes('達成: 1/2 (50%)'))
 
 const wt = formatWeeklyText(gapMenus, '2026-06-27')
-check('週共有: 見出し', wt.includes('Weekly summary'))
-check('週共有: 件数', wt.includes('Sessions: 3'))
-check('週共有: 平均', wt.includes('Avg completion: 100%'))
+check('週共有: 見出し', wt.includes('週次サマリー'))
+check('週共有: 件数', wt.includes('実施: 3回'))
+check('週共有: 平均', wt.includes('平均達成: 100%'))
 
 // --- プラン（変更なし） ---
 const planSettings = (over: Partial<Settings> = {}): Settings => ({ id: 'app', dailyCore: [], ...over })
