@@ -12,7 +12,7 @@ export default function DataManager() {
     try {
       const text = await file.text()
       const r = await importJSON(text)
-      setMsg(`Imported: ${r.exercises} exercises / ${r.menus} menus / ${r.metrics} metrics`)
+      setMsg(`Imported: ${r.workouts} workouts / ${r.menus} sessions / ${r.metrics} metrics`)
     } catch (err) {
       setMsg(`Import failed: ${(err as Error).message}`)
     } finally {

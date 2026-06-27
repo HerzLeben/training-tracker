@@ -1,4 +1,4 @@
-import type { DailyMenu, Settings } from '../types'
+import type { DailyMenu } from '../types'
 import { currentStreak, overallRate, weekCalendar } from '../lib/adherence'
 import { weekdayLabel } from '../lib/date'
 import { toPct } from '../lib/number'
@@ -6,29 +6,26 @@ import { CARD } from '../lib/styles'
 
 interface Props {
   menus: DailyMenu[]
-  settings: Settings
 }
 
 const cellStyle: Record<string, string> = {
   done: 'bg-emerald-500 text-slate-950',
   partial: 'bg-amber-500 text-slate-950',
-  missed: 'bg-rose-600/80 text-white',
-  rest: 'bg-slate-700 text-slate-300',
-  future: 'bg-slate-800 text-slate-600',
+  none: 'bg-slate-800 text-slate-600',
+  future: 'bg-slate-900 text-slate-700',
 }
 
 const cellMark: Record<string, string> = {
   done: '◎',
   partial: '△',
-  missed: '×',
-  rest: 'R',
+  none: '·',
   future: '·',
 }
 
-export default function AdherenceSummary({ menus, settings }: Props) {
-  const streak = currentStreak(menus, settings)
+export default function AdherenceSummary({ menus }: Props) {
+  const streak = currentStreak(menus)
   const rate30 = overallRate(menus, 30)
-  const week = weekCalendar(menus, settings, 7)
+  const week = weekCalendar(menus, 7)
 
   return (
     <div className="space-y-4">
@@ -65,8 +62,7 @@ export default function AdherenceSummary({ menus, settings }: Props) {
         <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-slate-500">
           <span>◎ Done</span>
           <span>△ Partial</span>
-          <span>× Missed</span>
-          <span>R Rest</span>
+          <span>· No session</span>
         </div>
       </div>
     </div>

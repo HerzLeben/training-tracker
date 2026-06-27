@@ -1,5 +1,5 @@
 import SettingsForm from '../components/SettingsForm'
-import ExerciseManager from '../components/ExerciseManager'
+import ProgramEditor from '../components/ProgramEditor'
 import DataManager from '../components/DataManager'
 
 export default function SettingsPage() {
@@ -7,10 +7,10 @@ export default function SettingsPage() {
     <div className="space-y-4">
       <header>
         <h1 className="text-xl font-bold">Settings</h1>
-        <p className="text-sm text-slate-400">Frequency, goals, exercises & data</p>
+        <p className="text-sm text-slate-400">Program, goals & data</p>
       </header>
+      <ProgramEditor />
       <SettingsForm />
-      <ExerciseManager />
       <DataManager />
     </div>
   )

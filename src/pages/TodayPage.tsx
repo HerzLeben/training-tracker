@@ -1,46 +1,34 @@
-import { useEffect, useRef } from 'react'
-import { getSettings, toggleMenuItem, setMenuItemWeight, toggleCoreItem } from '../db/repo'
-import { useSettings, useMenu, useMenus } from '../db/hooks'
-import { ensureMenuForDate } from '../engine/menuEngine'
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
+import type { Workout } from '../types'
+import { toggleMenuItem, toggleCoreItem, setItemResult, startSession } from '../db/repo'
+import { useMenu, useMenus, useWorkouts } from '../db/hooks'
 import { coreStreak } from '../lib/adherence'
+import { formatSessionText } from '../lib/share'
+import { shareText } from '../lib/shareTarget'
 import { todayISO, weekdayLabel } from '../lib/date'
+import { CARD } from '../lib/styles'
 import TodayMenu from '../components/TodayMenu'
 import CoreBlock from '../components/CoreBlock'
-import { CARD } from '../lib/styles'
 
 export default function TodayPage() {
   const today = todayISO()
-  const settings = useSettings()
+  const workouts = useWorkouts()
   const menu = useMenu(today)
   const allMenus = useMenus()
-  const ensuredFor = useRef<string | null>(null)
-
-  // 設定が読めたら、当日メニューが無ければ生成・保存する（日付ごとに1回）。
-  useEffect(() => {
-    if (!settings) return
-    if (ensuredFor.current === today) return
-    ensuredFor.current = today
-    void ensureMenuForDate(today, settings)
-  }, [settings, today])
-
-  const handleToggle = (exerciseId: string, done: boolean) => {
-    void toggleMenuItem(today, exerciseId, done)
-  }
-
-  const handleWeightChange = (exerciseId: string, weightKg: number) => {
-    void setMenuItemWeight(today, exerciseId, weightKg)
-  }
-
-  const handleCoreToggle = (exerciseId: string, done: boolean) => {
-    void toggleCoreItem(today, exerciseId, done)
-  }
-
-  const handleRegenerate = async () => {
-    const s = await getSettings()
-    await ensureMenuForDate(today, s, true)
-  }
+  const [picking, setPicking] = useState(false)
 
   const wd = weekdayLabel(new Date(today).getDay())
+  const showPicker = picking || (menu === undefined && workouts !== undefined)
+
+  const pick = async (w: Workout) => {
+    await startSession(today, w)
+    setPicking(false)
+  }
+
+  const handleShare = () => {
+    if (menu) void shareText(formatSessionText(menu))
+  }
 
   return (
     <div className="space-y-4">
@@ -51,25 +39,59 @@ export default function TodayPage() {
         </p>
       </header>
 
-      {!menu ? (
-        <div className={`${CARD} p-6 text-center text-slate-400`}>
-          Preparing your menu…
+      {workouts === undefined ? (
+        <div className={`${CARD} p-6 text-center text-slate-400`}>Loading…</div>
+      ) : workouts.length === 0 ? (
+        <div className={`${CARD} space-y-2 p-6 text-center`}>
+          <p className="text-slate-300">No program yet.</p>
+          <p className="text-sm text-slate-500">
+            Add your trainer's program in{' '}
+            <Link to="/settings" className="text-sky-400 underline">
+              Settings
+            </Link>
+            , then pick today's workout here.
+          </p>
         </div>
-      ) : (
+      ) : showPicker ? (
+        <div className={`${CARD} space-y-2 p-4`}>
+          <div className="text-sm font-medium text-slate-300">
+            {menu ? "Switch workout (resets today's records)" : "Pick today's workout"}
+          </div>
+          {workouts.map((w) => (
+            <button
+              key={w.id}
+              onClick={() => pick(w)}
+              className="w-full rounded-xl border border-slate-700 px-3 py-3 text-left active:bg-slate-800"
+            >
+              <div className="font-medium">{w.name}</div>
+              <div className="text-xs text-slate-500">{w.items.length} exercises</div>
+            </button>
+          ))}
+          {menu && (
+            <button
+              onClick={() => setPicking(false)}
+              className="w-full rounded-xl py-2 text-sm text-slate-400 active:bg-slate-800"
+            >
+              Cancel
+            </button>
+          )}
+        </div>
+      ) : menu ? (
         <>
           <TodayMenu
             menu={menu}
-            onToggle={handleToggle}
-            onWeightChange={handleWeightChange}
-            onRegenerate={handleRegenerate}
+            onToggle={(id, done) => void toggleMenuItem(today, id, done)}
+            onResult={(id, patch) => void setItemResult(today, id, patch)}
+            onShare={handleShare}
+            onChangeWorkout={() => setPicking(true)}
           />
           <CoreBlock
             items={menu.coreItems ?? []}
             streak={coreStreak(allMenus ?? [])}
-            onToggle={handleCoreToggle}
+            onToggle={(id, done) => void toggleCoreItem(today, id, done)}
           />
         </>
-      )}
+      ) : null}
     </div>
   )
 }

@@ -5,7 +5,8 @@ import { db } from './db'
 
 export const useSettings = () => useLiveQuery(() => db.settings.get('app'), [])
 
-export const useExercises = () => useLiveQuery(() => db.exercises.toArray(), [])
+/** 登録済みプログラム（ワークアウト）。 */
+export const useWorkouts = () => useLiveQuery(() => db.workouts.toArray(), [])
 
 /** 全メニュー（日付昇順）。集計・カレンダー用。 */
 export const useMenus = () => useLiveQuery(() => db.menus.orderBy('date').toArray(), [])

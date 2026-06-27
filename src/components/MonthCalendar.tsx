@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { DailyMenu, Settings } from '../types'
+import type { DailyMenu } from '../types'
 import { monthView } from '../lib/adherence'
 import { todayISO, weekdayLabel } from '../lib/date'
 import { toPct } from '../lib/number'
@@ -7,7 +7,6 @@ import { CARD } from '../lib/styles'
 
 interface Props {
   menus: DailyMenu[]
-  settings: Settings
 }
 
 const WEEKDAYS = [0, 1, 2, 3, 4, 5, 6]
@@ -19,18 +18,17 @@ const MONTHS = [
 const dayStyle: Record<string, string> = {
   done: 'bg-emerald-500 text-slate-950',
   partial: 'bg-amber-500 text-slate-950',
-  missed: 'bg-rose-600/80 text-white',
-  rest: 'bg-slate-800 text-slate-500',
+  none: 'bg-slate-800 text-slate-500',
   future: 'bg-slate-900 text-slate-600',
 }
 
-export default function MonthCalendar({ menus, settings }: Props) {
+export default function MonthCalendar({ menus }: Props) {
   const now = todayISO()
   const [y, m] = now.split('-').map(Number)
   // Anchor view to the current month; allow navigating back/forward.
   const [view, setView] = useState({ year: y, month: m - 1 })
 
-  const data = monthView(menus, settings, view.year, view.month, now)
+  const data = monthView(menus, view.year, view.month, now)
   const shift = (delta: number) => {
     const total = view.year * 12 + view.month + delta
     setView({ year: Math.floor(total / 12), month: ((total % 12) + 12) % 12 })
@@ -48,7 +46,7 @@ export default function MonthCalendar({ menus, settings }: Props) {
             {MONTHS[view.month]} {view.year}
           </div>
           <div className="text-[11px] text-slate-500">
-            {data.doneCount}/{data.trainingCount} sessions done
+            {data.doneCount}/{data.sessionCount} sessions done
           </div>
         </div>
         <button
@@ -89,8 +87,7 @@ export default function MonthCalendar({ menus, settings }: Props) {
       <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-slate-500">
         <span><span className="mr-1 inline-block h-2 w-2 rounded-sm bg-emerald-500" />Done</span>
         <span><span className="mr-1 inline-block h-2 w-2 rounded-sm bg-amber-500" />Partial</span>
-        <span><span className="mr-1 inline-block h-2 w-2 rounded-sm bg-rose-600/80" />Missed</span>
-        <span><span className="mr-1 inline-block h-2 w-2 rounded-sm bg-slate-800" />Rest</span>
+        <span><span className="mr-1 inline-block h-2 w-2 rounded-sm bg-slate-800" />No session</span>
       </div>
     </div>
   )

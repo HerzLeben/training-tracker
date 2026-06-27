@@ -48,7 +48,8 @@ export default function CoreBlock({ items, streak, onToggle }: Props) {
                 )}
               </div>
               <div className="text-xs text-slate-400">
-                {it.muscle} · {it.targetSets} × {it.targetReps}
+                {it.targetSets} × {it.targetReps}
+                {it.muscle ? ` · ${it.muscle}` : ''}
               </div>
             </div>
           </label>

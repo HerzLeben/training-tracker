@@ -1,31 +1,31 @@
 import { db } from '../db/db'
-import type { DailyMenu, Settings, Exercise, BodyMetric } from '../types'
+import type { DailyMenu, Settings, Workout, BodyMetric } from '../types'
 
 // データ所有のための入出力。全データの JSON 往復と、CSV エクスポート。
 
 export interface Backup {
   app: 'training-tracker'
-  version: 1
+  version: 2
   exportedAt: string
   settings: Settings | null
-  exercises: Exercise[]
+  workouts: Workout[]
   menus: DailyMenu[]
   metrics: BodyMetric[]
 }
 
 async function collect(): Promise<Backup> {
-  const [settings, exercises, menus, metrics] = await Promise.all([
+  const [settings, workouts, menus, metrics] = await Promise.all([
     db.settings.get('app'),
-    db.exercises.toArray(),
+    db.workouts.toArray(),
     db.menus.toArray(),
     db.metrics.toArray(),
   ])
   return {
     app: 'training-tracker',
-    version: 1,
+    version: 2,
     exportedAt: new Date().toISOString(),
     settings: settings ?? null,
-    exercises,
+    workouts,
     menus,
     metrics,
   }
@@ -56,30 +56,28 @@ function csvCell(v: string | number | undefined): string {
   return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
 }
 
-/** メニュー（達成記録）を種目1行で CSV 化。 */
+/** セッション結果を種目1行で CSV 化（実績の重量・回数を含む）。 */
 export async function exportMenusCSV(): Promise<void> {
   const menus = await db.menus.orderBy('date').toArray()
-  const rows = [['date', 'slot', 'exercise', 'muscle', 'weightKg', 'sets', 'reps', 'done']]
+  const header = ['date', 'workout', 'exercise', 'targetSets', 'targetReps', 'targetWeightKg', 'weightKg', 'reps', 'done']
+  const rows = [header]
   for (const m of menus) {
-    if (m.items.length === 0) {
-      rows.push([m.date, m.slot, '', '', '', '', '', ''])
-      continue
-    }
     for (const it of m.items) {
       rows.push([
         m.date,
-        m.slot,
+        m.workoutName ?? '',
         it.name,
-        it.muscle,
-        it.weightKg === undefined ? '' : String(it.weightKg),
         String(it.targetSets),
         it.targetReps,
+        it.targetWeightKg === undefined ? '' : String(it.targetWeightKg),
+        it.weightKg === undefined ? '' : String(it.weightKg),
+        it.reps === undefined ? '' : String(it.reps),
         it.done ? '1' : '0',
       ])
     }
   }
   const csv = rows.map((r) => r.map(csvCell).join(',')).join('\n')
-  download(`training-menus-${stamp()}.csv`, csv, 'text/csv')
+  download(`training-results-${stamp()}.csv`, csv, 'text/csv')
 }
 
 /** 体組成を CSV 化。 */
@@ -93,19 +91,19 @@ export async function exportMetricsCSV(): Promise<void> {
 }
 
 /** JSON バックアップを取り込み（マージ）。件数を返す。 */
-export async function importJSON(text: string): Promise<{ exercises: number; menus: number; metrics: number }> {
+export async function importJSON(text: string): Promise<{ workouts: number; menus: number; metrics: number }> {
   const data = JSON.parse(text) as Partial<Backup>
   if (data.app !== 'training-tracker') {
     throw new Error('Not a Training Tracker backup file.')
   }
-  await db.transaction('rw', db.settings, db.exercises, db.menus, db.metrics, async () => {
+  await db.transaction('rw', db.settings, db.workouts, db.menus, db.metrics, async () => {
     if (data.settings) await db.settings.put({ ...data.settings, id: 'app' })
-    if (data.exercises?.length) await db.exercises.bulkPut(data.exercises)
+    if (data.workouts?.length) await db.workouts.bulkPut(data.workouts)
     if (data.menus?.length) await db.menus.bulkPut(data.menus)
     if (data.metrics?.length) await db.metrics.bulkPut(data.metrics)
   })
   return {
-    exercises: data.exercises?.length ?? 0,
+    workouts: data.workouts?.length ?? 0,
     menus: data.menus?.length ?? 0,
     metrics: data.metrics?.length ?? 0,
   }
