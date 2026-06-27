@@ -36,13 +36,13 @@ export default function CoreBlock({ items, streak, onToggle }: Props) {
               type="checkbox"
               checked={it.done}
               onChange={(e) => onToggle(it.exerciseId, e.target.checked)}
-              className="h-6 w-6 shrink-0 accent-emerald-600"
+              className="h-6 w-6 shrink-0 accent-[#01A09B]"
             />
             <div className="min-w-0 flex-1">
-              <div className={`truncate font-medium ${it.done ? 'text-emerald-700 line-through' : 'text-slate-800'}`}>
+              <div className={`truncate font-medium ${it.done ? 'text-[#017a75] line-through' : 'text-slate-800'}`}>
                 {it.name}
                 {it.daily && (
-                  <span className="ml-2 rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] text-emerald-600">
+                  <span className="ml-2 rounded bg-[#e6f6f5] px-1.5 py-0.5 text-[10px] text-[#01A09B]">
                     daily
                   </span>
                 )}

@@ -73,10 +73,10 @@ export default function BodyMetricForm() {
           className={field}
         />
       </div>
-      <button className="w-full rounded-xl bg-emerald-600 py-2 font-medium text-white active:bg-emerald-700">
+      <button className="w-full rounded-xl bg-[#01A09B] py-2 font-medium text-white active:bg-[#017a75]">
         Save
       </button>
-      {msg && <p className="text-center text-sm text-emerald-600">{msg}</p>}
+      {msg && <p className="text-center text-sm text-[#01A09B]">{msg}</p>}
     </form>
   )
 }

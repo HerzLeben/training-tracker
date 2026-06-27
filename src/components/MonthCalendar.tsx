@@ -69,7 +69,7 @@ export default function MonthCalendar({ menus }: Props) {
               title={`${c.date}${c.pct === null ? '' : ' · ' + toPct(c.pct) + '%'}`}
               className={`flex aspect-square flex-col items-center justify-center rounded-lg text-xs ${
                 STATUS_BG[c.status]
-              } ${c.date === now ? 'ring-2 ring-emerald-500' : ''}`}
+              } ${c.date === now ? 'ring-2 ring-[#01A09B]' : ''}`}
             >
               {c.day}
             </div>
@@ -78,7 +78,7 @@ export default function MonthCalendar({ menus }: Props) {
       </div>
 
       <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-slate-400">
-        <span><span className="mr-1 inline-block h-2 w-2 rounded-sm bg-emerald-500" />Done</span>
+        <span><span className="mr-1 inline-block h-2 w-2 rounded-sm bg-[#01A09B]" />Done</span>
         <span><span className="mr-1 inline-block h-2 w-2 rounded-sm bg-amber-400" />Partial</span>
         <span><span className="mr-1 inline-block h-2 w-2 rounded-sm bg-slate-200" />No session</span>
       </div>

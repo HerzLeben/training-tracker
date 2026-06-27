@@ -28,7 +28,7 @@ export default function AdherenceSummary({ menus }: Props) {
           <div className="mt-1 text-xs text-slate-500">Day streak</div>
         </div>
         <div className={`${CARD} p-4 text-center`}>
-          <div className="text-3xl font-bold text-emerald-600">
+          <div className="text-3xl font-bold text-[#01A09B]">
             {rate30 === null ? '—' : `${rate30}%`}
           </div>
           <div className="mt-1 text-xs text-slate-500">30-day completion</div>

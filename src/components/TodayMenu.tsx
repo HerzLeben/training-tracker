@@ -24,7 +24,7 @@ export default function TodayMenu({ menu, onToggle, onResult, onShare, onChangeW
           <h2 className="text-lg font-semibold text-slate-800">{menu.workoutName ?? 'Session'}</h2>
         </div>
         <div className="text-right">
-          <div className="text-2xl font-bold text-emerald-600">{pct === null ? '—' : `${toPct(pct)}%`}</div>
+          <div className="text-2xl font-bold text-[#01A09B]">{pct === null ? '—' : `${toPct(pct)}%`}</div>
           <div className="text-xs text-slate-500">
             {doneCount}/{menu.items.length} exercises
           </div>
@@ -33,7 +33,7 @@ export default function TodayMenu({ menu, onToggle, onResult, onShare, onChangeW
 
       <div className="h-2 overflow-hidden rounded-full bg-slate-100">
         <div
-          className="h-full rounded-full bg-emerald-500 transition-all"
+          className="h-full rounded-full bg-[#01A09B] transition-all"
           style={{ width: `${toPct(pct ?? 0)}%` }}
         />
       </div>

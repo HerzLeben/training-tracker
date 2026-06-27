@@ -26,10 +26,10 @@ export default function MenuItemRow({ item, onToggle, onResult }: Props) {
           type="checkbox"
           checked={item.done}
           onChange={(e) => onToggle(e.target.checked)}
-          className="h-6 w-6 shrink-0 accent-emerald-600"
+          className="h-6 w-6 shrink-0 accent-[#01A09B]"
         />
         <div className="min-w-0 flex-1">
-          <div className={`truncate font-medium ${item.done ? 'text-emerald-700 line-through' : 'text-slate-800'}`}>
+          <div className={`truncate font-medium ${item.done ? 'text-[#017a75] line-through' : 'text-slate-800'}`}>
             {item.name}
           </div>
           <div className="text-xs text-slate-500">

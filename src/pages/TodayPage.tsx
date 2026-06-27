@@ -46,7 +46,7 @@ export default function TodayPage() {
           <p className="text-slate-700">No program yet.</p>
           <p className="text-sm text-slate-500">
             Add your trainer's program in{' '}
-            <Link to="/settings" className="font-medium text-emerald-600 underline">
+            <Link to="/settings" className="font-medium text-[#01A09B] underline">
               Settings
             </Link>
             , then pick today's workout here.

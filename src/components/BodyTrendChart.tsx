@@ -52,7 +52,7 @@ export default function BodyTrendChart({ metrics }: Props) {
             type="monotone"
             dataKey="muscle"
             name="Muscle (kg)"
-            stroke="#10b981"
+            stroke="#01A09B"
             strokeWidth={2}
             connectNulls
             dot={{ r: 2 }}

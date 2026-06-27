@@ -32,7 +32,7 @@ export default function DataManager() {
       <button onClick={() => exportMetricsCSV()} className={btn}>Export body metrics as CSV</button>
       <button onClick={() => fileRef.current?.click()} className={btn}>Import JSON (restore)</button>
       <input ref={fileRef} type="file" accept="application/json" onChange={onImport} className="hidden" />
-      {msg && <p className="text-center text-sm text-emerald-600">{msg}</p>}
+      {msg && <p className="text-center text-sm text-[#01A09B]">{msg}</p>}
     </div>
   )
 }

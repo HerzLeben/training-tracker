@@ -26,7 +26,7 @@ export default function ProgressPage() {
         </div>
         <button
           onClick={shareWeekly}
-          className="rounded-xl bg-emerald-600 px-3 py-2 text-sm font-medium text-white active:bg-emerald-700"
+          className="rounded-xl bg-[#01A09B] px-3 py-2 text-sm font-medium text-white active:bg-[#017a75]"
         >
           Share week
         </button>

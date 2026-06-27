@@ -27,7 +27,7 @@ export default function BodyPage() {
                 <span className="flex-1 px-3 text-slate-700">
                   {m.weightKg !== undefined && <span className="mr-3">{m.weightKg} kg</span>}
                   {m.bodyFatPct !== undefined && <span className="mr-3 text-pink-500">{m.bodyFatPct} %</span>}
-                  {m.muscleKg !== undefined && <span className="text-emerald-600">{m.muscleKg} kg muscle</span>}
+                  {m.muscleKg !== undefined && <span className="text-[#01A09B]">{m.muscleKg} kg muscle</span>}
                 </span>
                 <button
                   onClick={() => deleteMetric(m.date)}

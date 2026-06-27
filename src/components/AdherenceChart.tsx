@@ -31,7 +31,7 @@ export default function AdherenceChart({ menus }: Props) {
             labelStyle={{ color: '#475569' }}
             formatter={(v: number) => [`${v}%`, 'Completion']}
           />
-          <Line type="monotone" dataKey="pct" stroke="#10b981" strokeWidth={2} dot={{ r: 2 }} />
+          <Line type="monotone" dataKey="pct" stroke="#01A09B" strokeWidth={2} dot={{ r: 2 }} />
         </LineChart>
       </ResponsiveContainer>
     </div>

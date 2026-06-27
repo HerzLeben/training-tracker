@@ -17,7 +17,7 @@ function Row({ line }: { line: PlanLine }) {
         <span className="text-sm text-slate-700">
           {line.current === undefined ? '—' : r1(line.current)}
           <span className="mx-1 text-slate-400">{arrow}</span>
-          <span className="text-emerald-600">
+          <span className="text-[#01A09B]">
             {r1(line.target)} {line.unit}
           </span>
         </span>
@@ -25,7 +25,7 @@ function Row({ line }: { line: PlanLine }) {
       {line.current === undefined ? (
         <p className="mt-1 text-xs text-slate-400">Log your current value on the Body tab to track pace.</p>
       ) : line.remaining === 0 ? (
-        <p className="mt-1 text-xs text-emerald-600">🎉 Target reached.</p>
+        <p className="mt-1 text-xs text-[#01A09B]">🎉 Target reached.</p>
       ) : (
         <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs">
           <span className="text-slate-500">
@@ -42,7 +42,7 @@ function Row({ line }: { line: PlanLine }) {
             </span>
           )}
           {line.onTrack !== undefined && (
-            <span className={line.onTrack ? 'text-emerald-600' : 'text-amber-600'}>
+            <span className={line.onTrack ? 'text-[#01A09B]' : 'text-amber-600'}>
               {line.onTrack ? '● on track' : '● behind pace'}
             </span>
           )}

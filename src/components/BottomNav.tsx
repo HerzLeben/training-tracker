@@ -17,7 +17,7 @@ export default function BottomNav() {
               to={t.to}
               className={({ isActive }) =>
                 `flex flex-col items-center gap-0.5 py-2 text-xs ${
-                  isActive ? 'text-emerald-600' : 'text-slate-400'
+                  isActive ? 'text-[#01A09B]' : 'text-slate-400'
                 }`
               }
             >
