@@ -1,5 +1,5 @@
 import type { PrescribedExercise, Workout } from '../types'
-import { upsertWorkout, deleteWorkout, setDailyCore } from '../db/repo'
+import { upsertWorkout, deleteWorkout, setDailyCore, loadSampleProgram } from '../db/repo'
 import { useWorkouts, useSettings } from '../db/hooks'
 import { CARD } from '../lib/styles'
 
@@ -136,6 +136,14 @@ export default function ProgramEditor() {
         >
           + Add workout
         </button>
+        {workouts.length === 0 && (
+          <button
+            onClick={() => void loadSampleProgram()}
+            className="w-full rounded-xl border border-dashed border-slate-300 py-2 text-xs text-slate-500 active:bg-slate-100"
+          >
+            Load a sample program (to try it out)
+          </button>
+        )}
       </div>
 
       <div className={`space-y-2 ${CARD} p-4`}>

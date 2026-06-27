@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { Workout } from '../types'
-import { toggleMenuItem, toggleCoreItem, setItemResult, startSession } from '../db/repo'
+import { toggleMenuItem, toggleCoreItem, setItemResult, startSession, loadSampleProgram } from '../db/repo'
 import { useMenu, useMenus, useWorkouts } from '../db/hooks'
+import { BTN_PRIMARY } from '../lib/styles'
 import { coreStreak } from '../lib/adherence'
 import { formatSessionText } from '../lib/share'
 import { shareText } from '../lib/shareTarget'
@@ -42,15 +43,18 @@ export default function TodayPage() {
       {workouts === undefined ? (
         <div className={`${CARD} p-6 text-center text-slate-400`}>Loading…</div>
       ) : workouts.length === 0 ? (
-        <div className={`${CARD} space-y-2 p-6 text-center`}>
+        <div className={`${CARD} space-y-3 p-6 text-center`}>
           <p className="text-slate-700">No program yet.</p>
           <p className="text-sm text-slate-500">
             Add your trainer's program in{' '}
             <Link to="/settings" className="font-medium text-[#01A09B] underline">
               Settings
             </Link>
-            , then pick today's workout here.
+            , or try a sample to see how it works.
           </p>
+          <button onClick={() => void loadSampleProgram()} className={`${BTN_PRIMARY} w-full py-2 text-sm font-medium`}>
+            Load a sample program
+          </button>
         </div>
       ) : showPicker ? (
         <div className={`${CARD} space-y-2 p-4`}>
