@@ -1,6 +1,8 @@
 import type { DailyMenu, Settings } from '../types'
 import { currentStreak, overallRate, weekCalendar } from '../lib/adherence'
 import { weekdayLabel } from '../lib/date'
+import { toPct } from '../lib/number'
+import { CARD } from '../lib/styles'
 
 interface Props {
   menus: DailyMenu[]
@@ -31,11 +33,11 @@ export default function AdherenceSummary({ menus, settings }: Props) {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
-        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4 text-center">
+        <div className={`${CARD} p-4 text-center`}>
           <div className="text-3xl font-bold text-orange-400">🔥 {streak}</div>
           <div className="mt-1 text-xs text-slate-400">Day streak</div>
         </div>
-        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4 text-center">
+        <div className={`${CARD} p-4 text-center`}>
           <div className="text-3xl font-bold text-sky-400">
             {rate30 === null ? '—' : `${rate30}%`}
           </div>
@@ -43,7 +45,7 @@ export default function AdherenceSummary({ menus, settings }: Props) {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4">
+      <div className={`${CARD} p-4`}>
         <div className="mb-2 text-sm font-medium text-slate-300">Last 7 days</div>
         <div className="flex justify-between gap-1">
           {week.map((c) => (
@@ -53,7 +55,7 @@ export default function AdherenceSummary({ menus, settings }: Props) {
                 className={`flex h-9 w-full items-center justify-center rounded-lg text-sm font-semibold ${
                   cellStyle[c.status]
                 }`}
-                title={`${c.date} ${c.pct === null ? '' : Math.round(c.pct * 100) + '%'}`}
+                title={`${c.date} ${c.pct === null ? '' : toPct(c.pct) + '%'}`}
               >
                 {cellMark[c.status]}
               </div>

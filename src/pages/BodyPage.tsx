@@ -1,11 +1,11 @@
-import { useLiveQuery } from 'dexie-react-hooks'
-import { db } from '../db/db'
 import { deleteMetric } from '../db/repo'
+import { useMetricsDesc } from '../db/hooks'
+import { CARD } from '../lib/styles'
 import BodyMetricForm from '../components/BodyMetricForm'
 import BodyTrendChart from '../components/BodyTrendChart'
 
 export default function BodyPage() {
-  const metrics = useLiveQuery(() => db.metrics.orderBy('date').reverse().toArray(), [])
+  const metrics = useMetricsDesc()
 
   return (
     <div className="space-y-4">
@@ -18,7 +18,7 @@ export default function BodyPage() {
       <BodyTrendChart metrics={metrics ?? []} />
 
       {metrics && metrics.length > 0 && (
-        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-2">
+        <div className={`${CARD} p-2`}>
           <div className="px-2 py-1 text-sm font-medium text-slate-300">History</div>
           <ul className="divide-y divide-slate-800">
             {metrics.map((m) => (

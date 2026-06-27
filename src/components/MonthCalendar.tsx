@@ -1,14 +1,16 @@
 import { useState } from 'react'
 import type { DailyMenu, Settings } from '../types'
 import { monthView } from '../lib/adherence'
-import { todayISO } from '../lib/date'
+import { todayISO, weekdayLabel } from '../lib/date'
+import { toPct } from '../lib/number'
+import { CARD } from '../lib/styles'
 
 interface Props {
   menus: DailyMenu[]
   settings: Settings
 }
 
-const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+const WEEKDAYS = [0, 1, 2, 3, 4, 5, 6]
 const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December',
@@ -36,7 +38,7 @@ export default function MonthCalendar({ menus, settings }: Props) {
   const isCurrentMonth = view.year === y && view.month === m - 1
 
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4">
+    <div className={`${CARD} p-4`}>
       <div className="mb-3 flex items-center justify-between">
         <button onClick={() => shift(-1)} className="rounded-lg px-2 py-1 text-slate-400 active:bg-slate-800">
           ‹
@@ -59,9 +61,9 @@ export default function MonthCalendar({ menus, settings }: Props) {
       </div>
 
       <div className="mb-1 grid grid-cols-7 gap-1">
-        {WD.map((w) => (
-          <div key={w} className="text-center text-[10px] text-slate-500">
-            {w}
+        {WEEKDAYS.map((wd) => (
+          <div key={wd} className="text-center text-[10px] text-slate-500">
+            {weekdayLabel(wd)}
           </div>
         ))}
       </div>
@@ -73,7 +75,7 @@ export default function MonthCalendar({ menus, settings }: Props) {
           ) : (
             <div
               key={c.date}
-              title={`${c.date}${c.pct === null ? '' : ' · ' + Math.round(c.pct * 100) + '%'}`}
+              title={`${c.date}${c.pct === null ? '' : ' · ' + toPct(c.pct) + '%'}`}
               className={`flex aspect-square flex-col items-center justify-center rounded-lg text-xs ${
                 dayStyle[c.status]
               } ${c.date === now ? 'ring-2 ring-sky-400' : ''}`}

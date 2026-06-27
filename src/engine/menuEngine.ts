@@ -1,8 +1,11 @@
-import type { BodyMetric, Category, DailyMenu, Exercise, GoalType, MenuItem, Settings, Slot } from '../types'
+import type { Category, DailyMenu, Exercise, GoalType, MenuItem, Settings, Slot } from '../types'
 import { slotForDate, categoriesForSlot } from './split'
-import { getMenu, putMenu, listMenus, listEnabledExercises, listMetrics } from '../db/repo'
-import { getSettings } from '../db/repo'
+import { getMenu, putMenu, listMenus, listEnabledExercises, listMetrics, getSettings } from '../db/repo'
 import { diffDays, isWeekend } from '../lib/date'
+import { round1 } from '../lib/number'
+import { latestBody } from '../lib/metrics'
+
+export { latestBody }
 
 // 動的なメニュー生成。
 // 入力 = 週の頻度（→スロット）・目標体脂肪/筋肉量と現在値の差（→方針）・直近達成（→微調整）。
@@ -46,14 +49,6 @@ const EMPHASIS_LABEL: Record<GoalType, string> = {
 
 export function emphasisLabel(g: GoalType): string {
   return EMPHASIS_LABEL[g]
-}
-
-/** 体組成の最新値（項目ごとに最も新しい記録）を取り出す。 */
-export function latestBody(metrics: BodyMetric[]): { fat?: number; muscle?: number } {
-  const sorted = [...metrics].sort((a, b) => b.date.localeCompare(a.date))
-  const fat = sorted.find((m) => m.bodyFatPct !== undefined)?.bodyFatPct
-  const muscle = sorted.find((m) => m.muscleKg !== undefined)?.muscleKg
-  return { fat, muscle }
 }
 
 /**
@@ -136,11 +131,7 @@ function suggestWeight(ex: Exercise, last: LastLift | undefined): number | undef
   if (!last) return ex.weightKg
   const base = last.weightKg ?? ex.weightKg
   if (base === undefined) return undefined
-  return last.done ? round(base + incrementFor(ex.slot)) : base
-}
-
-function round(n: number): number {
-  return Math.round(n * 10) / 10
+  return last.done ? round1(base + incrementFor(ex.slot)) : base
 }
 
 const CORE_SETS = 3

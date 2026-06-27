@@ -2,6 +2,8 @@ import type { DailyMenu } from '../types'
 import { completion } from '../lib/adherence'
 import { SLOT_LABEL } from '../lib/labels'
 import { emphasisLabel } from '../engine/menuEngine'
+import { toPct } from '../lib/number'
+import { CARD } from '../lib/styles'
 import MenuItemRow from './MenuItemRow'
 
 interface Props {
@@ -17,7 +19,7 @@ export default function TodayMenu({ menu, onToggle, onWeightChange, onRegenerate
 
   if (menu.slot === 'rest') {
     return (
-      <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 text-center">
+      <div className={`${CARD} p-6 text-center`}>
         <div className="mb-2 text-4xl">😴</div>
         <h2 className="mb-1 text-lg font-semibold">Rest Day</h2>
         <p className="text-sm text-slate-400">{menu.note}</p>
@@ -42,7 +44,7 @@ export default function TodayMenu({ menu, onToggle, onWeightChange, onRegenerate
         </div>
         <div className="text-right">
           <div className="text-2xl font-bold text-sky-400">
-            {pct === null ? '—' : `${Math.round(pct * 100)}%`}
+            {pct === null ? '—' : `${toPct(pct)}%`}
           </div>
           <div className="text-xs text-slate-400">
             {doneCount}/{menu.items.length} exercises
@@ -53,7 +55,7 @@ export default function TodayMenu({ menu, onToggle, onWeightChange, onRegenerate
       <div className="h-2 overflow-hidden rounded-full bg-slate-800">
         <div
           className="h-full rounded-full bg-emerald-500 transition-all"
-          style={{ width: `${Math.round((pct ?? 0) * 100)}%` }}
+          style={{ width: `${toPct(pct ?? 0)}%` }}
         />
       </div>
 

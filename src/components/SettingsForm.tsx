@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react'
-import { useLiveQuery } from 'dexie-react-hooks'
-import { db } from '../db/db'
 import { setFrequency, setTargets } from '../db/repo'
+import { useSettings } from '../db/hooks'
 import { SLOT_SHORT } from '../lib/labels'
 import { weekdayLabel } from '../lib/date'
+import { CARD, FIELD } from '../lib/styles'
 
 const FREQS = [2, 3, 4, 5, 6]
 
 export default function SettingsForm() {
-  const settings = useLiveQuery(() => db.settings.get('app'), [])
+  const settings = useSettings()
   const [fat, setFat] = useState('')
   const [muscle, setMuscle] = useState('')
   const [date, setDate] = useState('')
@@ -31,10 +31,10 @@ export default function SettingsForm() {
     })
   }
 
-  const field = 'w-full rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-base'
+  const field = `w-full ${FIELD}`
 
   return (
-    <div className="space-y-4 rounded-2xl border border-slate-800 bg-slate-900 p-4">
+    <div className={`space-y-4 ${CARD} p-4`}>
       <div>
         <label className="mb-1 block text-sm font-medium text-slate-300">Sessions per week</label>
         <div className="grid grid-cols-5 gap-2">

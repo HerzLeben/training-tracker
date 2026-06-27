@@ -12,7 +12,10 @@
       "Bash(npm run *)",
       "Bash(git add *)",
       "Bash(git -c 'user.name=Wataru Kinoshita' -c user.email=wataru.kinoshita@herzleben.co.jp commit -q -m ' *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(gh run *)",
+      "Bash(curl -s -o /dev/null -w \"index %{http_code}\\\\n\" https://herzleben.github.io/training-tracker/)",
+      "Bash(git -c 'user.name=Wataru Kinoshita' -c user.email=wataru.kinoshita@herzleben.co.jp -c commit.gpgsign=false commit -q -m ' *)"
     ]
   }
 }

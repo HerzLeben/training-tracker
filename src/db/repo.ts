@@ -2,6 +2,7 @@ import { db } from './db'
 import type { Exercise, Settings, DailyMenu, BodyMetric } from '../types'
 import { DEFAULT_EXERCISES } from '../data/exerciseCatalog'
 import { splitForFrequency, clampFreq } from '../engine/split'
+import { round1 } from '../lib/number'
 
 const DEFAULT_FREQUENCY = 6
 
@@ -92,24 +93,27 @@ export async function listMenus(): Promise<DailyMenu[]> {
   return db.menus.orderBy('date').toArray()
 }
 
-/** 指定日の種目チェックを更新して保存。 */
-export async function toggleMenuItem(date: string, exerciseId: string, done: boolean): Promise<void> {
+/** 指定日のメニューを読み込み、mutate を適用して保存（無ければ何もしない）。 */
+async function updateMenu(date: string, mutate: (menu: DailyMenu) => void): Promise<void> {
   const menu = await db.menus.get(date)
   if (!menu) return
-  menu.items = menu.items.map((it) =>
-    it.exerciseId === exerciseId ? { ...it, done } : it,
-  )
+  mutate(menu)
   await db.menus.put(menu)
+}
+
+/** 指定日の種目チェックを更新して保存。 */
+export async function toggleMenuItem(date: string, exerciseId: string, done: boolean): Promise<void> {
+  await updateMenu(date, (menu) => {
+    menu.items = menu.items.map((it) => (it.exerciseId === exerciseId ? { ...it, done } : it))
+  })
 }
 
 /** 指定日のコア（体幹）種目のチェックを更新して保存。 */
 export async function toggleCoreItem(date: string, exerciseId: string, done: boolean): Promise<void> {
-  const menu = await db.menus.get(date)
-  if (!menu || !menu.coreItems) return
-  menu.coreItems = menu.coreItems.map((it) =>
-    it.exerciseId === exerciseId ? { ...it, done } : it,
-  )
-  await db.menus.put(menu)
+  await updateMenu(date, (menu) => {
+    if (!menu.coreItems) return
+    menu.coreItems = menu.coreItems.map((it) => (it.exerciseId === exerciseId ? { ...it, done } : it))
+  })
 }
 
 /**
@@ -121,15 +125,11 @@ export async function setMenuItemWeight(
   exerciseId: string,
   weightKg: number,
 ): Promise<void> {
-  const w = Math.max(0, Math.round(weightKg * 10) / 10)
+  const w = Math.max(0, round1(weightKg))
   await db.transaction('rw', db.menus, db.exercises, async () => {
-    const menu = await db.menus.get(date)
-    if (menu) {
-      menu.items = menu.items.map((it) =>
-        it.exerciseId === exerciseId ? { ...it, weightKg: w } : it,
-      )
-      await db.menus.put(menu)
-    }
+    await updateMenu(date, (menu) => {
+      menu.items = menu.items.map((it) => (it.exerciseId === exerciseId ? { ...it, weightKg: w } : it))
+    })
     const ex = await db.exercises.get(exerciseId)
     if (ex) await db.exercises.put({ ...ex, weightKg: w })
   })

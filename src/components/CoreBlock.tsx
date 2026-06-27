@@ -1,4 +1,5 @@
 import type { MenuItem } from '../types'
+import { CARD, itemBorder } from '../lib/styles'
 
 interface Props {
   items: MenuItem[]
@@ -11,7 +12,7 @@ export default function CoreBlock({ items, streak, onToggle }: Props) {
   const doneCount = items.filter((i) => i.done).length
 
   return (
-    <div className="space-y-2 rounded-2xl border border-slate-800 bg-slate-900 p-4">
+    <div className={`space-y-2 ${CARD} p-4`}>
       <div className="flex items-center justify-between">
         <div>
           <h3 className="font-semibold">Core</h3>
@@ -29,9 +30,7 @@ export default function CoreBlock({ items, streak, onToggle }: Props) {
         {items.map((it) => (
           <label
             key={it.exerciseId}
-            className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition ${
-              it.done ? 'border-emerald-700/60 bg-emerald-900/20' : 'border-slate-800 bg-slate-900'
-            }`}
+            className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition ${itemBorder(it.done)}`}
           >
             <input
               type="checkbox"

@@ -1,12 +1,12 @@
 import type { BodyMetric, Settings } from '../types'
 import { buildPlan, type PlanLine } from '../lib/plan'
+import { round1 as r1 } from '../lib/number'
+import { CARD } from '../lib/styles'
 
 interface Props {
   settings: Settings
   metrics: BodyMetric[]
 }
-
-const r1 = (n: number) => Math.round(n * 10) / 10
 
 function Row({ line }: { line: PlanLine }) {
   const arrow = line.direction === 'down' ? '↓' : '↑'
@@ -57,7 +57,7 @@ export default function PlanSummary({ settings, metrics }: Props) {
 
   if (!plan.hasTargets) {
     return (
-      <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4 text-sm text-slate-400">
+      <div className={`${CARD} p-4 text-sm text-slate-400`}>
         Set target body fat / muscle and a date in <span className="text-slate-200">Settings</span> to
         see your plan here.
       </div>
@@ -65,7 +65,7 @@ export default function PlanSummary({ settings, metrics }: Props) {
   }
 
   return (
-    <div className="space-y-2 rounded-2xl border border-slate-800 bg-slate-900 p-4">
+    <div className={`space-y-2 ${CARD} p-4`}>
       <div className="flex items-center justify-between">
         <div className="text-sm font-medium text-slate-300">Plan</div>
         {plan.targetDate ? (

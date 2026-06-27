@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { upsertMetric } from '../db/repo'
 import { todayISO } from '../lib/date'
+import { CARD, FIELD } from '../lib/styles'
 
 export default function BodyMetricForm() {
   const [date, setDate] = useState(todayISO())
@@ -26,10 +27,10 @@ export default function BodyMetricForm() {
     setTimeout(() => setMsg(''), 2000)
   }
 
-  const field = 'w-full rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-base'
+  const field = `w-full ${FIELD}`
 
   return (
-    <form onSubmit={submit} className="space-y-3 rounded-2xl border border-slate-800 bg-slate-900 p-4">
+    <form onSubmit={submit} className={`space-y-3 ${CARD} p-4`}>
       <div>
         <label className="mb-1 block text-xs text-slate-400">Date</label>
         <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={field} />

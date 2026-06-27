@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { exportJSON, exportMenusCSV, exportMetricsCSV, importJSON } from '../lib/exportImport'
+import { CARD } from '../lib/styles'
 
 export default function DataManager() {
   const fileRef = useRef<HTMLInputElement>(null)
@@ -23,7 +24,7 @@ export default function DataManager() {
   const btn = 'w-full rounded-xl border border-slate-700 py-2 text-sm active:bg-slate-800'
 
   return (
-    <div className="space-y-2 rounded-2xl border border-slate-800 bg-slate-900 p-4">
+    <div className={`space-y-2 ${CARD} p-4`}>
       <div className="text-sm font-medium text-slate-300">Data</div>
       <p className="text-xs text-slate-500">All data is stored on this device. Back it up or restore it here.</p>
       <button onClick={() => exportJSON()} className={btn}>Export JSON (backup)</button>

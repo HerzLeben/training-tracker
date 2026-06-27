@@ -1,14 +1,13 @@
-import { useLiveQuery } from 'dexie-react-hooks'
-import { db } from '../db/db'
 import PlanSummary from '../components/PlanSummary'
 import AdherenceSummary from '../components/AdherenceSummary'
 import MonthCalendar from '../components/MonthCalendar'
 import AdherenceChart from '../components/AdherenceChart'
+import { useSettings, useMenus, useMetrics } from '../db/hooks'
 
 export default function ProgressPage() {
-  const settings = useLiveQuery(() => db.settings.get('app'), [])
-  const menus = useLiveQuery(() => db.menus.toArray(), [])
-  const metrics = useLiveQuery(() => db.metrics.toArray(), [])
+  const settings = useSettings()
+  const menus = useMenus()
+  const metrics = useMetrics()
 
   if (!settings || !menus || !metrics) {
     return <div className="text-slate-400">Loading…</div>

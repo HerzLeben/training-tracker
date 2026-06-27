@@ -1,5 +1,6 @@
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import type { BodyMetric } from '../types'
+import { CARD } from '../lib/styles'
 
 interface Props {
   metrics: BodyMetric[]
@@ -17,14 +18,14 @@ export default function BodyTrendChart({ metrics }: Props) {
 
   if (data.length === 0) {
     return (
-      <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 text-center text-sm text-slate-400">
+      <div className={`${CARD} p-6 text-center text-sm text-slate-400`}>
         No records yet.
       </div>
     )
   }
 
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900 p-3">
+    <div className={`${CARD} p-3`}>
       <div className="mb-2 px-1 text-sm font-medium text-slate-300">Body trend</div>
       <ResponsiveContainer width="100%" height={220}>
         <LineChart data={data} margin={{ top: 5, right: 8, left: -20, bottom: 0 }}>

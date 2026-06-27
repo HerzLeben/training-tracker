@@ -1,4 +1,5 @@
 import type { MenuItem } from '../types'
+import { itemBorder } from '../lib/styles'
 
 interface Props {
   item: MenuItem
@@ -14,11 +15,7 @@ export default function MenuItemRow({ item, onToggle, onWeightChange }: Props) {
   const adjust = (delta: number) => onWeightChange(Math.max(0, (w ?? 0) + delta))
 
   return (
-    <div
-      className={`rounded-xl border p-3 transition ${
-        item.done ? 'border-emerald-700/60 bg-emerald-900/20' : 'border-slate-800 bg-slate-900'
-      }`}
-    >
+    <div className={`rounded-xl border p-3 transition ${itemBorder(item.done)}`}>
       <div className="flex items-center gap-3">
         <input
           type="checkbox"

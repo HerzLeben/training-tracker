@@ -1,18 +1,18 @@
 import { useEffect, useRef } from 'react'
-import { useLiveQuery } from 'dexie-react-hooks'
-import { db } from '../db/db'
 import { getSettings, toggleMenuItem, setMenuItemWeight, toggleCoreItem } from '../db/repo'
+import { useSettings, useMenu, useMenus } from '../db/hooks'
 import { ensureMenuForDate } from '../engine/menuEngine'
 import { coreStreak } from '../lib/adherence'
 import { todayISO, weekdayLabel } from '../lib/date'
 import TodayMenu from '../components/TodayMenu'
 import CoreBlock from '../components/CoreBlock'
+import { CARD } from '../lib/styles'
 
 export default function TodayPage() {
   const today = todayISO()
-  const settings = useLiveQuery(() => db.settings.get('app'), [])
-  const menu = useLiveQuery(() => db.menus.get(today), [today])
-  const allMenus = useLiveQuery(() => db.menus.toArray(), [])
+  const settings = useSettings()
+  const menu = useMenu(today)
+  const allMenus = useMenus()
   const ensuredFor = useRef<string | null>(null)
 
   // 設定が読めたら、当日メニューが無ければ生成・保存する（日付ごとに1回）。
@@ -52,7 +52,7 @@ export default function TodayPage() {
       </header>
 
       {!menu ? (
-        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 text-center text-slate-400">
+        <div className={`${CARD} p-6 text-center text-slate-400`}>
           Preparing your menu…
         </div>
       ) : (

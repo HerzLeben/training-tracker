@@ -1,6 +1,7 @@
 import type { DailyMenu, Settings, Slot } from '../types'
 import { slotForDate } from '../engine/split'
-import { addDays, todayISO, toISODate } from './date'
+import { addDays, todayISO, toISODate, weekdayOf } from './date'
+import { toPct } from './number'
 
 // 達成率・ストリーク・週カレンダーの集計ロジック。
 
@@ -40,6 +41,18 @@ function statusFor(date: string, slot: Slot, menu: DailyMenu | undefined, today:
 const byDate = (menus: DailyMenu[]): Map<string, DailyMenu> =>
   new Map(menus.map((m) => [m.date, m]))
 
+/** 1日分のカレンダーセルを組み立てる。 */
+function buildCell(
+  date: string,
+  settings: Settings,
+  map: Map<string, DailyMenu>,
+  today: string,
+): DayCell {
+  const slot = slotForDate(date, settings.splitPattern)
+  const menu = map.get(date)
+  return { date, weekday: weekdayOf(date), slot, status: statusFor(date, slot, menu, today), pct: completion(menu) }
+}
+
 /** 今日を末尾とする直近 days 日の各日ステータス。 */
 export function weekCalendar(
   menus: DailyMenu[],
@@ -50,16 +63,7 @@ export function weekCalendar(
   const map = byDate(menus)
   const cells: DayCell[] = []
   for (let i = days - 1; i >= 0; i--) {
-    const date = addDays(today, -i)
-    const slot = slotForDate(date, settings.splitPattern)
-    const menu = map.get(date)
-    cells.push({
-      date,
-      weekday: new Date(date).getDay(),
-      slot,
-      status: statusFor(date, slot, menu, today),
-      pct: completion(menu),
-    })
+    cells.push(buildCell(addDays(today, -i), settings, map, today))
   }
   return cells
 }
@@ -97,22 +101,38 @@ export function monthView(
       cells.push(null)
       continue
     }
-    const d = new Date(year, month, dayNum)
-    const date = toISODate(d)
-    const slot = slotForDate(date, settings.splitPattern)
-    const menu = map.get(date)
-    const status = statusFor(date, slot, menu, today)
-    if (slot !== 'rest' && date <= today) trainingCount++
-    if (status === 'done') doneCount++
-    cells.push({ date, weekday: d.getDay(), slot, status, pct: completion(menu), day: dayNum })
+    const date = toISODate(new Date(year, month, dayNum))
+    const cell = buildCell(date, settings, map, today)
+    if (cell.slot !== 'rest' && date <= today) trainingCount++
+    if (cell.status === 'done') doneCount++
+    cells.push({ ...cell, day: dayNum })
   }
   return { year, month, cells, doneCount, trainingCount }
+}
+
+/** 1日の評価。achieved=継続, neutral=スキップ（休養等）, failed=途切れ。 */
+type DayEval = 'achieved' | 'neutral' | 'failed'
+
+/**
+ * 今日から過去へ遡り、連続達成日数を数える共通ロジック。
+ * neutral はストリークを途切れさせず、failed で途切れる。
+ * ただし当日(i=0)の failed は「未確定」として途切れさせない。
+ */
+function walkStreak(today: string, evalDay: (date: string) => DayEval): number {
+  let streak = 0
+  for (let i = 0; i < 400; i++) {
+    const r = evalDay(addDays(today, -i))
+    if (r === 'achieved') streak++
+    else if (r === 'neutral') continue
+    else if (i === 0) continue // 当日はまだ未確定
+    else break
+  }
+  return streak
 }
 
 /**
  * 現在のストリーク（達成が続いた連続トレーニング日数）。
  * 休養日は途切れさせず、未達のトレーニング日で途切れる。
- * 当日がトレーニング日でまだ未達の場合は「未確定」として数えずに遡る。
  */
 export function currentStreak(
   menus: DailyMenu[],
@@ -120,44 +140,22 @@ export function currentStreak(
   today = todayISO(),
 ): number {
   const map = byDate(menus)
-  let streak = 0
-  for (let i = 0; i < 400; i++) {
-    const date = addDays(today, -i)
-    const slot = slotForDate(date, settings.splitPattern)
-    if (slot === 'rest') continue
-    const achieved = isAchieved(map.get(date))
-    if (achieved) {
-      streak++
-    } else if (i === 0) {
-      continue // 当日はまだ未確定 → 途切れさせない
-    } else {
-      break
-    }
-  }
-  return streak
+  return walkStreak(today, (date) => {
+    if (slotForDate(date, settings.splitPattern) === 'rest') return 'neutral'
+    return isAchieved(map.get(date)) ? 'achieved' : 'failed'
+  })
 }
 
 /**
  * デイリーコア（プランク等）の連続達成日数。
- * その日の daily コアが全て done なら継続。当日が未達ならまだ未確定として遡る。
+ * その日の daily コアが全て done なら継続。
  */
 export function coreStreak(menus: DailyMenu[], today = todayISO()): number {
   const map = byDate(menus)
-  let streak = 0
-  for (let i = 0; i < 400; i++) {
-    const date = addDays(today, -i)
-    const menu = map.get(date)
-    const daily = menu?.coreItems?.filter((c) => c.daily) ?? []
-    const allDone = daily.length > 0 && daily.every((c) => c.done)
-    if (allDone) {
-      streak++
-    } else if (i === 0) {
-      continue // 当日は未確定
-    } else {
-      break
-    }
-  }
-  return streak
+  return walkStreak(today, (date) => {
+    const daily = map.get(date)?.coreItems?.filter((c) => c.daily) ?? []
+    return daily.length > 0 && daily.every((c) => c.done) ? 'achieved' : 'failed'
+  })
 }
 
 /** トレーニング日の日次達成率の時系列（チャート用）。 */
@@ -165,7 +163,7 @@ export function adherenceSeries(menus: DailyMenu[]): { date: string; pct: number
   return menus
     .filter((m) => m.items.length > 0)
     .sort((a, b) => a.date.localeCompare(b.date))
-    .map((m) => ({ date: m.date, pct: Math.round((completion(m) ?? 0) * 100) }))
+    .map((m) => ({ date: m.date, pct: toPct(completion(m) ?? 0) }))
 }
 
 /** 直近 windowDays 日のトレーニング日平均達成率（0..100）。データなしは null。 */
@@ -178,5 +176,5 @@ export function overallRate(
   const inWindow = menus.filter((m) => m.items.length > 0 && m.date >= from && m.date <= today)
   if (inWindow.length === 0) return null
   const sum = inWindow.reduce((acc, m) => acc + (completion(m) ?? 0), 0)
-  return Math.round((sum / inWindow.length) * 100)
+  return toPct(sum / inWindow.length)
 }

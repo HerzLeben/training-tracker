@@ -1,14 +1,14 @@
 import { useState } from 'react'
-import { useLiveQuery } from 'dexie-react-hooks'
-import { db } from '../db/db'
 import { upsertExercise, deleteExercise } from '../db/repo'
+import { useExercises } from '../db/hooks'
 import type { Category, Exercise } from '../types'
 import { SLOT_LABEL } from '../lib/labels'
+import { CARD, FIELD } from '../lib/styles'
 
 const SLOTS: Category[] = ['push', 'pull', 'legs', 'core']
 
 export default function ExerciseManager() {
-  const exercises = useLiveQuery(() => db.exercises.toArray(), [])
+  const exercises = useExercises()
   const [name, setName] = useState('')
   const [slot, setSlot] = useState<Category>('push')
   const [muscle, setMuscle] = useState('')
@@ -25,10 +25,10 @@ export default function ExerciseManager() {
   const toggle = (ex: Exercise) => upsertExercise({ ...ex, enabled: !ex.enabled })
 
   if (!exercises) return null
-  const field = 'rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-base'
+  const field = FIELD
 
   return (
-    <div className="space-y-3 rounded-2xl border border-slate-800 bg-slate-900 p-4">
+    <div className={`space-y-3 ${CARD} p-4`}>
       <div className="text-sm font-medium text-slate-300">Exercise catalog</div>
       <p className="text-xs text-slate-500">
         Unchecked exercises are excluded from suggestions. The kg field is the starting working

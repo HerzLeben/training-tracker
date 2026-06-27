@@ -1,5 +1,6 @@
 import type { BodyMetric, Settings } from '../types'
 import { diffDays, todayISO } from './date'
+import { latestBody } from './metrics'
 
 // 期限つき目標から「大きなプラン」を要約する。
 // 現在値（最新記録）→ 目標（期限）に必要な週あたりペースと、直近の実ペースを比較。
@@ -79,12 +80,7 @@ export function buildPlan(settings: Settings, metrics: BodyMetric[], today = tod
 
   const weeksLeft = settings.targetDate ? Math.max(0, diffDays(today, settings.targetDate) / 7) : null
 
-  const latestFat = [...metrics]
-    .filter((m) => m.bodyFatPct !== undefined)
-    .sort((a, b) => b.date.localeCompare(a.date))[0]?.bodyFatPct
-  const latestMuscle = [...metrics]
-    .filter((m) => m.muscleKg !== undefined)
-    .sort((a, b) => b.date.localeCompare(a.date))[0]?.muscleKg
+  const { fat: latestFat, muscle: latestMuscle } = latestBody(metrics)
 
   return {
     hasTargets,

@@ -1,6 +1,7 @@
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import type { DailyMenu } from '../types'
 import { adherenceSeries } from '../lib/adherence'
+import { CARD } from '../lib/styles'
 
 interface Props {
   menus: DailyMenu[]
@@ -11,14 +12,14 @@ export default function AdherenceChart({ menus }: Props) {
 
   if (data.length === 0) {
     return (
-      <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 text-center text-sm text-slate-400">
+      <div className={`${CARD} p-6 text-center text-sm text-slate-400`}>
         No training records yet.
       </div>
     )
   }
 
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900 p-3">
+    <div className={`${CARD} p-3`}>
       <div className="mb-2 px-1 text-sm font-medium text-slate-300">Completion trend</div>
       <ResponsiveContainer width="100%" height={200}>
         <LineChart data={data} margin={{ top: 5, right: 8, left: -20, bottom: 0 }}>
