@@ -1,6 +1,7 @@
 import SettingsForm from '../components/SettingsForm'
 import ProgramEditor from '../components/ProgramEditor'
 import DataManager from '../components/DataManager'
+import AppUpdate from '../components/AppUpdate'
 
 export default function SettingsPage() {
   return (
@@ -12,6 +13,7 @@ export default function SettingsPage() {
       <ProgramEditor />
       <SettingsForm />
       <DataManager />
+      <AppUpdate />
     </div>
   )
 }
