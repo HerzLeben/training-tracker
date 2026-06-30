@@ -10,6 +10,7 @@ import {
 } from '../src/lib/adherence.ts'
 import { formatSessionText, formatWeeklyText } from '../src/lib/share.ts'
 import { parseMetricsCSV } from '../src/lib/csv.ts'
+import { SAMPLE_WORKOUTS } from '../src/data/sampleProgram.ts'
 import { buildPlan } from '../src/lib/plan.ts'
 import type { BodyMetric, DailyMenu, PrescribedExercise, Settings, Workout } from '../src/types/index.ts'
 
@@ -123,6 +124,25 @@ check('CSV: 列順・別名に追従', (() => {
 let threw = false
 try { parseMetricsCSV('weight,fat\n70,18') } catch { threw = true }
 check('CSV: date 列なしはエラー', threw)
+
+// --- トレーナープログラム（6メニュー） ---
+const byId = Object.fromEntries(SAMPLE_WORKOUTS.map((w) => [w.id, w]))
+check('プログラムは6メニュー', SAMPLE_WORKOUTS.length === 6)
+check('6日: 胸/肩/二頭/三頭/足/背中', ['w-chest','w-shoulder','w-biceps','w-triceps','w-legs','w-back'].every((id) => byId[id]))
+check('二頭は5種目', byId['w-biceps'].items.length === 5)
+check('アームカール重め=2×10@30', (() => {
+  const it = byId['w-biceps'].items[0]
+  return it.targetSets === 2 && it.targetReps === '10' && it.targetWeightKg === 30
+})())
+check('背中ラットプルダウン@37.5', byId['w-back'].items[0].targetWeightKg === 37.5)
+check('胸スミスは重量なし', byId['w-chest'].items[0].targetWeightKg === undefined)
+check('全種目id一意', (() => {
+  const ids = SAMPLE_WORKOUTS.flatMap((w) => w.items.map((i) => i.id))
+  return new Set(ids).size === ids.length
+})())
+// buildSession でセッション化できる
+const sess2 = buildSession('2026-06-27', byId['w-chest'], dailyCore, 0)
+check('胸セッション: 目標重量を実績初期値に', sess2.items[1].weightKg === 12)
 
 console.log(`\n${pass} passed, ${fail} failed`)
 process.exit(fail === 0 ? 0 : 1)

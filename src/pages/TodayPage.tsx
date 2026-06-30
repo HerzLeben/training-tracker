@@ -46,14 +46,14 @@ export default function TodayPage() {
         <div className={`${CARD} space-y-3 p-6 text-center`}>
           <p className="text-slate-700">No program yet.</p>
           <p className="text-sm text-slate-500">
-            Add your trainer's program in{' '}
+            Load your trainer's program, or edit it anytime in{' '}
             <Link to="/settings" className="font-medium text-[#01A09B] underline">
               Settings
             </Link>
-            , or try a sample to see how it works.
+            .
           </p>
           <button onClick={() => void loadSampleProgram()} className={`${BTN_PRIMARY} w-full py-2 text-sm font-medium`}>
-            Load a sample program
+            Load my program（トレーナーのメニュー）
           </button>
         </div>
       ) : showPicker ? (

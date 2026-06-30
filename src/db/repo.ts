@@ -2,7 +2,7 @@ import { db } from './db'
 import type { Workout, Settings, DailyMenu, BodyMetric, PrescribedExercise } from '../types'
 import { buildSession } from '../engine/session'
 import { round1 } from '../lib/number'
-import { SAMPLE_WORKOUTS } from '../data/sampleProgram'
+import { SAMPLE_WORKOUTS, LEGACY_SAMPLE_IDS } from '../data/sampleProgram'
 
 // 既定の毎日コア（プランク）。
 export const DEFAULT_DAILY_CORE: PrescribedExercise[] = [
@@ -62,9 +62,12 @@ export async function deleteWorkout(id: string): Promise<void> {
   await db.workouts.delete(id)
 }
 
-/** お試し用サンプルプログラムを読み込む（固定 id なので重複しない）。 */
+/** プログラムを読み込む（固定 id なので重複しない）。旧デモは掃除する。 */
 export async function loadSampleProgram(): Promise<void> {
-  await db.workouts.bulkPut(SAMPLE_WORKOUTS)
+  await db.transaction('rw', db.workouts, async () => {
+    await db.workouts.bulkDelete(LEGACY_SAMPLE_IDS)
+    await db.workouts.bulkPut(SAMPLE_WORKOUTS)
+  })
 }
 
 // --- セッション（メニュー） ---
