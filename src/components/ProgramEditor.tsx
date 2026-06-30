@@ -141,7 +141,7 @@ export default function ProgramEditor() {
             onClick={() => void loadSampleProgram()}
             className="w-full rounded-xl border border-dashed border-slate-300 py-2 text-xs text-slate-500 active:bg-slate-100"
           >
-            Load my program（トレーナーのメニュー）
+            Load my program (sample to try)
           </button>
         )}
       </div>

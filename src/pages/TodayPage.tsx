@@ -53,7 +53,7 @@ export default function TodayPage() {
             .
           </p>
           <button onClick={() => void loadSampleProgram()} className={`${BTN_PRIMARY} w-full py-2 text-sm font-medium`}>
-            Load my program（トレーナーのメニュー）
+            Load my program
           </button>
         </div>
       ) : showPicker ? (
