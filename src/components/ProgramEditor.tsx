@@ -136,14 +136,16 @@ export default function ProgramEditor() {
         >
           + Add workout
         </button>
-        {workouts.length === 0 && (
-          <button
-            onClick={() => void loadSampleProgram()}
-            className="w-full rounded-xl border border-dashed border-slate-300 py-2 text-xs text-slate-500 active:bg-slate-100"
-          >
-            Load my program (sample to try)
-          </button>
-        )}
+        <button
+          onClick={() => void loadSampleProgram()}
+          className="w-full rounded-xl border border-dashed border-slate-300 py-2 text-xs text-slate-500 active:bg-slate-100"
+        >
+          Load trainer program (6-day)
+        </button>
+        <p className="text-[11px] text-slate-400">
+          Loads the 6 menus (Chest / Shoulders / Arms·Biceps / Arms·Triceps / Legs / Back). Re-tapping
+          resets those to the trainer's values; your own added workouts are kept.
+        </p>
       </div>
 
       <div className={`space-y-2 ${CARD} p-4`}>

@@ -71,6 +71,12 @@ export default function TodayPage() {
               <div className="text-xs text-slate-500">{w.items.length} exercises</div>
             </button>
           ))}
+          <button
+            onClick={() => void loadSampleProgram()}
+            className="w-full rounded-xl border border-dashed border-slate-300 py-2 text-xs text-slate-500 active:bg-slate-100"
+          >
+            Load trainer program (6-day)
+          </button>
           {menu && (
             <button
               onClick={() => setPicking(false)}
