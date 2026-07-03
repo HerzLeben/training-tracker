@@ -11,6 +11,7 @@ import {
 import { formatSessionText, formatWeeklyText } from '../src/lib/share.ts'
 import { parseMetricsCSV } from '../src/lib/csv.ts'
 import { SAMPLE_WORKOUTS } from '../src/data/sampleProgram.ts'
+import { workoutStats, lastLiftByExercise } from '../src/lib/history.ts'
 import { buildPlan } from '../src/lib/plan.ts'
 import type { BodyMetric, DailyMenu, PrescribedExercise, Settings, Workout } from '../src/types/index.ts'
 
@@ -33,7 +34,7 @@ const workout: Workout = {
 const dailyCore: PrescribedExercise[] = [
   { id: 'plank', name: 'Plank', category: 'core', targetSets: 3, targetReps: '45–60s' },
 ]
-const sess = buildSession('2026-06-27', workout, dailyCore, 0)
+const sess = buildSession('2026-06-27', workout, dailyCore)
 check('セッション種目数2', sess.items.length === 2)
 check('workoutName を引き継ぐ', sess.workoutName === 'Push')
 check('目標重量を実績初期値に', sess.items[0].weightKg === 60)
@@ -141,8 +142,35 @@ check('全種目id一意', (() => {
   return new Set(ids).size === ids.length
 })())
 // buildSession でセッション化できる
-const sess2 = buildSession('2026-06-27', byId['w-chest'], dailyCore, 0)
+const sess2 = buildSession('2026-06-27', byId['w-chest'], dailyCore)
 check('胸セッション: 目標重量を実績初期値に', sess2.items[1].weightKg === 12)
+
+// --- 前回重量プリセット & 履歴集計 ---
+const presetSess = buildSession('2026-06-27', workout, dailyCore, { a: { weightKg: 62.5 } })
+check('前回重量をプリセット', presetSess.items[0].weightKg === 62.5)
+check('前回なしは目標重量', presetSess.items[1].weightKg === undefined)
+
+const histMenus: DailyMenu[] = [
+  { date: '2026-06-20', workoutId: 'w-chest', workoutName: 'Chest', generatedAt: 0, items: [
+    { exerciseId: 'a', name: 'Bench', targetSets: 3, targetReps: '10', weightKg: 40, done: true },
+  ] },
+  { date: '2026-06-24', workoutId: 'w-chest', workoutName: 'Chest', generatedAt: 0, items: [
+    { exerciseId: 'a', name: 'Bench', targetSets: 3, targetReps: '10', weightKg: 42.5, done: true },
+  ] },
+  { date: '2026-06-25', workoutId: 'w-back', workoutName: 'Back', generatedAt: 0, items: [
+    { exerciseId: 'z', name: 'Row', targetSets: 3, targetReps: '10', weightKg: 35, done: true },
+  ] },
+]
+const cs = workoutStats(histMenus, 'w-chest', '2026-06-27')
+check('workoutStats: 回数2', cs.count === 2)
+check('workoutStats: 前回2026-06-24', cs.lastDate === '2026-06-24')
+check('workoutStats: 経過3日', cs.daysSince === 3)
+check('workoutStats: 未実施は0/前回なし', (() => {
+  const s = workoutStats(histMenus, 'w-legs', '2026-06-27')
+  return s.count === 0 && s.lastDate === undefined
+})())
+const lifts = lastLiftByExercise(histMenus, '2026-06-27')
+check('lastLift: 最新の重量42.5', lifts['a']?.weightKg === 42.5)
 
 console.log(`\n${pass} passed, ${fail} failed`)
 process.exit(fail === 0 ? 0 : 1)

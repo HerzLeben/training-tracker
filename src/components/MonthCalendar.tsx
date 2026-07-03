@@ -7,6 +7,7 @@ import { CARD, STATUS_BG } from '../lib/styles'
 
 interface Props {
   menus: DailyMenu[]
+  onSelectDate?: (date: string) => void
 }
 
 const WEEKDAYS = [0, 1, 2, 3, 4, 5, 6]
@@ -15,7 +16,7 @@ const MONTHS = [
   'July', 'August', 'September', 'October', 'November', 'December',
 ]
 
-export default function MonthCalendar({ menus }: Props) {
+export default function MonthCalendar({ menus, onSelectDate }: Props) {
   const now = todayISO()
   const [y, m] = now.split('-').map(Number)
   // Anchor view to the current month; allow navigating back/forward.
@@ -64,15 +65,16 @@ export default function MonthCalendar({ menus }: Props) {
           c === null ? (
             <div key={i} />
           ) : (
-            <div
+            <button
               key={c.date}
+              onClick={() => onSelectDate?.(c.date)}
               title={`${c.date}${c.pct === null ? '' : ' · ' + toPct(c.pct) + '%'}`}
               className={`flex aspect-square flex-col items-center justify-center rounded-lg text-xs ${
                 STATUS_BG[c.status]
               } ${c.date === now ? 'ring-2 ring-[#01A09B]' : ''}`}
             >
               {c.day}
-            </div>
+            </button>
           ),
         )}
       </div>

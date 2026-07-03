@@ -5,6 +5,7 @@ import { toggleMenuItem, toggleCoreItem, setItemResult, startSession, loadSample
 import { useMenu, useMenus, useWorkouts } from '../db/hooks'
 import { BTN_PRIMARY } from '../lib/styles'
 import { coreStreak } from '../lib/adherence'
+import { workoutStats, daysAgoLabel } from '../lib/history'
 import { formatSessionText } from '../lib/share'
 import { shareText } from '../lib/shareTarget'
 import { todayISO, weekdayLabel } from '../lib/date'
@@ -61,16 +62,22 @@ export default function TodayPage() {
           <div className="text-sm font-medium text-slate-700">
             {menu ? "Switch workout (resets today's records)" : "Pick today's workout"}
           </div>
-          {workouts.map((w) => (
-            <button
-              key={w.id}
-              onClick={() => pick(w)}
-              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-left active:bg-slate-50"
-            >
-              <div className="font-medium text-slate-800">{w.name}</div>
-              <div className="text-xs text-slate-500">{w.items.length} exercises</div>
-            </button>
-          ))}
+          {workouts.map((w) => {
+            const st = workoutStats(allMenus ?? [], w.id, today)
+            return (
+              <button
+                key={w.id}
+                onClick={() => pick(w)}
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-left active:bg-slate-50"
+              >
+                <div className="font-medium text-slate-800">{w.name}</div>
+                <div className="text-xs text-slate-500">
+                  {w.items.length} exercises · done {st.count}×
+                  {st.lastDate ? ` · last ${daysAgoLabel(st.daysSince ?? 0)}` : ''}
+                </div>
+              </button>
+            )
+          })}
           <button
             onClick={() => void loadSampleProgram()}
             className="w-full rounded-xl border border-dashed border-slate-300 py-2 text-xs text-slate-500 active:bg-slate-100"
@@ -90,6 +97,7 @@ export default function TodayPage() {
         <>
           <TodayMenu
             menu={menu}
+            stats={menu.workoutId ? workoutStats(allMenus ?? [], menu.workoutId, today) : undefined}
             onToggle={(id, done) => void toggleMenuItem(today, id, done)}
             onResult={(id, patch) => void setItemResult(today, id, patch)}
             onShare={handleShare}

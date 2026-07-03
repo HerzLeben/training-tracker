@@ -18,6 +18,19 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* フォーム要素がカード幅を超えないための全体ガード（iOS の date 入力対策含む）。 */
+input,
+select,
+textarea {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+input[type='date'] {
+  -webkit-appearance: none;
+  appearance: none;
+  min-width: 0;
+}
+
 /* iPhone のセーフエリア対応（ホーム画面追加時） */
 .safe-bottom {
   padding-bottom: env(safe-area-inset-bottom);

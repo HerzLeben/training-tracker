@@ -1,7 +1,9 @@
+import { useState } from 'react'
 import PlanSummary from '../components/PlanSummary'
 import AdherenceSummary from '../components/AdherenceSummary'
 import MonthCalendar from '../components/MonthCalendar'
 import AdherenceChart from '../components/AdherenceChart'
+import DayDetail from '../components/DayDetail'
 import { useSettings, useMenus, useMetrics } from '../db/hooks'
 import { formatWeeklyText } from '../lib/share'
 import { shareText } from '../lib/shareTarget'
@@ -10,6 +12,7 @@ export default function ProgressPage() {
   const settings = useSettings()
   const menus = useMenus()
   const metrics = useMetrics()
+  const [selected, setSelected] = useState<string | null>(null)
 
   if (!settings || !menus || !metrics) {
     return <div className="text-slate-500">Loading…</div>
@@ -32,9 +35,11 @@ export default function ProgressPage() {
         </button>
       </header>
       <PlanSummary settings={settings} metrics={metrics} />
-      <AdherenceSummary menus={menus} />
-      <MonthCalendar menus={menus} />
+      <AdherenceSummary menus={menus} onSelectDate={setSelected} />
+      <MonthCalendar menus={menus} onSelectDate={setSelected} />
       <AdherenceChart menus={menus} />
+
+      {selected && <DayDetail date={selected} onClose={() => setSelected(null)} />}
     </div>
   )
 }

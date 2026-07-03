@@ -50,7 +50,7 @@ function ExerciseRow({
       <input
         type="number"
         inputMode="decimal"
-        step="2.5"
+        step="0.5"
         value={item.targetWeightKg ?? ''}
         onChange={(e) =>
           onChange({ targetWeightKg: e.target.value === '' ? undefined : Number(e.target.value) })

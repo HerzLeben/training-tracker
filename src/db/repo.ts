@@ -2,6 +2,7 @@ import { db } from './db'
 import type { Workout, Settings, DailyMenu, BodyMetric, PrescribedExercise } from '../types'
 import { buildSession } from '../engine/session'
 import { round1 } from '../lib/number'
+import { lastLiftByExercise } from '../lib/history'
 import { SAMPLE_WORKOUTS, LEGACY_SAMPLE_IDS } from '../data/sampleProgram'
 
 // 既定の毎日コア（プランク）。
@@ -85,8 +86,9 @@ export async function listMenus(): Promise<DailyMenu[]> {
 
 /** 指定日のセッションをワークアウトから生成して保存（既存は上書き＝実績リセット）。 */
 export async function startSession(date: string, workout: Workout): Promise<DailyMenu> {
-  const settings = await getSettings()
-  const session = buildSession(date, workout, settings.dailyCore)
+  const [settings, history] = await Promise.all([getSettings(), listMenus()])
+  const last = lastLiftByExercise(history, date)
+  const session = buildSession(date, workout, settings.dailyCore, last)
   await db.menus.put(session)
   return session
 }

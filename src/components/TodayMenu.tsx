@@ -2,17 +2,19 @@ import type { DailyMenu } from '../types'
 import { completion } from '../lib/adherence'
 import { toPct } from '../lib/number'
 import { BTN_PRIMARY, BTN_SECONDARY } from '../lib/styles'
+import { daysAgoLabel, type WorkoutStats } from '../lib/history'
 import MenuItemRow from './MenuItemRow'
 
 interface Props {
   menu: DailyMenu
+  stats?: WorkoutStats
   onToggle: (exerciseId: string, done: boolean) => void
   onResult: (exerciseId: string, patch: { weightKg?: number; reps?: number }) => void
   onShare: () => void
   onChangeWorkout: () => void
 }
 
-export default function TodayMenu({ menu, onToggle, onResult, onShare, onChangeWorkout }: Props) {
+export default function TodayMenu({ menu, stats, onToggle, onResult, onShare, onChangeWorkout }: Props) {
   const pct = completion(menu)
   const doneCount = menu.items.filter((i) => i.done).length
 
@@ -22,6 +24,15 @@ export default function TodayMenu({ menu, onToggle, onResult, onShare, onChangeW
         <div>
           <div className="text-sm text-slate-500">Today's workout</div>
           <h2 className="text-lg font-semibold text-slate-800">{menu.workoutName ?? 'Session'}</h2>
+          {stats && (
+            <div className="mt-0.5 text-xs text-slate-500">
+              {stats.lastDate
+                ? `Last: ${stats.lastDate} (${daysAgoLabel(stats.daysSince ?? 0)})`
+                : 'First time'}
+              {' · '}
+              <span className="text-[#01A09B]">done {stats.count}×</span>
+            </div>
+          )}
         </div>
         <div className="text-right">
           <div className="text-2xl font-bold text-[#01A09B]">{pct === null ? '—' : `${toPct(pct)}%`}</div>
