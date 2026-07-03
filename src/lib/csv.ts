@@ -14,6 +14,7 @@ function toNum(v: string | undefined): number | undefined {
   return Number.isNaN(n) ? undefined : n
 }
 
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
 const DATE_KEYS = ['date', '日付', 'day']
 const WEIGHT_KEYS = ['weightkg', 'weight', 'weight(kg)', '体重', '体重kg']
 const FAT_KEYS = ['bodyfatpct', 'bodyfat', 'fat', 'bodyfat(%)', '体脂肪', '体脂肪率']
@@ -36,7 +37,8 @@ export function parseMetricsCSV(text: string): BodyMetric[] {
   for (let i = 1; i < rows.length; i++) {
     const c = splitRow(rows[i])
     const date = c[di]
-    if (!date) continue
+    // 'YYYY-MM-DD' 形式のみ受け入れる（不正な日付キーで並びが壊れるのを防ぐ）。
+    if (!date || !ISO_DATE.test(date)) continue
     const m: BodyMetric = { date }
     if (wi >= 0) m.weightKg = toNum(c[wi])
     if (fi >= 0) m.bodyFatPct = toNum(c[fi])

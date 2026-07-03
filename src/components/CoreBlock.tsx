@@ -1,5 +1,6 @@
 import type { MenuItem } from '../types'
-import { CARD, itemBorder } from '../lib/styles'
+import { CARD } from '../lib/styles'
+import CoreItemRow from './CoreItemRow'
 
 interface Props {
   items: MenuItem[]
@@ -28,31 +29,7 @@ export default function CoreBlock({ items, streak, onToggle }: Props) {
 
       <div className="space-y-2">
         {items.map((it) => (
-          <label
-            key={it.exerciseId}
-            className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition ${itemBorder(it.done)}`}
-          >
-            <input
-              type="checkbox"
-              checked={it.done}
-              onChange={(e) => onToggle(it.exerciseId, e.target.checked)}
-              className="h-6 w-6 shrink-0 accent-[#01A09B]"
-            />
-            <div className="min-w-0 flex-1">
-              <div className={`truncate font-medium ${it.done ? 'text-[#017a75] line-through' : 'text-slate-800'}`}>
-                {it.name}
-                {it.daily && (
-                  <span className="ml-2 rounded bg-[#e6f6f5] px-1.5 py-0.5 text-[10px] text-[#01A09B]">
-                    daily
-                  </span>
-                )}
-              </div>
-              <div className="text-xs text-slate-500">
-                {it.targetSets} × {it.targetReps}
-                {it.muscle ? ` · ${it.muscle}` : ''}
-              </div>
-            </div>
-          </label>
+          <CoreItemRow key={it.exerciseId} item={it} onToggle={(done) => onToggle(it.exerciseId, done)} />
         ))}
       </div>
     </div>

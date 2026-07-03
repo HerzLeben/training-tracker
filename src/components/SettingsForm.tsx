@@ -68,8 +68,16 @@ export default function SettingsForm() {
         <input
           type="date"
           value={date}
-          onChange={(e) => setDate(e.target.value)}
-          onBlur={saveTargets}
+          onChange={(e) => {
+            const v = e.target.value
+            setDate(v)
+            // date は blur が発火しにくいので即保存する。
+            void setTargets({
+              targetBodyFatPct: fat === '' ? undefined : Number(fat),
+              targetMuscleKg: muscle === '' ? undefined : Number(muscle),
+              targetDate: v === '' ? undefined : v,
+            })
+          }}
           className={field}
         />
       </div>

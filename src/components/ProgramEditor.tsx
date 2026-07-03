@@ -2,6 +2,7 @@ import type { PrescribedExercise, Workout } from '../types'
 import { upsertWorkout, deleteWorkout, setDailyCore, loadSampleProgram } from '../db/repo'
 import { useWorkouts, useSettings } from '../db/hooks'
 import { CARD } from '../lib/styles'
+import NumberField from './NumberField'
 
 const numInput = 'rounded-lg border border-slate-300 bg-white px-2 py-1 text-sm text-slate-800 placeholder:text-slate-400'
 
@@ -30,14 +31,12 @@ function ExerciseRow({
         placeholder="Exercise"
         className={`min-w-0 flex-1 ${numInput}`}
       />
-      <input
-        type="number"
-        inputMode="numeric"
-        min={1}
+      <NumberField
         value={item.targetSets}
-        onChange={(e) => onChange({ targetSets: Number(e.target.value) || 1 })}
+        onCommit={(n) => onChange({ targetSets: n === undefined ? 1 : Math.max(1, Math.round(n)) })}
+        inputMode="numeric"
+        ariaLabel="sets"
         className={`w-11 text-center ${numInput}`}
-        aria-label="sets"
       />
       <span className="text-xs text-slate-400">×</span>
       <input
@@ -47,17 +46,12 @@ function ExerciseRow({
         className={`w-14 text-center ${numInput}`}
         aria-label="reps"
       />
-      <input
-        type="number"
-        inputMode="decimal"
-        step="0.5"
-        value={item.targetWeightKg ?? ''}
-        onChange={(e) =>
-          onChange({ targetWeightKg: e.target.value === '' ? undefined : Number(e.target.value) })
-        }
+      <NumberField
+        value={item.targetWeightKg}
+        onCommit={(n) => onChange({ targetWeightKg: n })}
         placeholder="kg"
+        ariaLabel="target weight"
         className={`w-14 text-right ${numInput}`}
-        aria-label="target weight"
       />
       <button onClick={onDelete} className="px-1 text-rose-500" aria-label="delete exercise">
         ×

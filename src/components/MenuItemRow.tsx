@@ -28,7 +28,12 @@ export default function MenuItemRow({ item, onToggle, onResult }: Props) {
   useEffect(() => setWStr(item.weightKg?.toString() ?? ''), [item.weightKg])
   useEffect(() => setRStr(item.reps?.toString() ?? ''), [item.reps])
 
-  const adjust = (delta: number) => onResult({ weightKg: Math.max(0, round1((item.weightKg ?? 0) + delta)) })
+  // +/- は「入力中の値」を基準にする（未確定の入力を捨てない）。
+  const adjust = (delta: number) => {
+    const base = wStr === '' ? (item.weightKg ?? 0) : Number(wStr)
+    const from = Number.isNaN(base) ? (item.weightKg ?? 0) : base
+    onResult({ weightKg: Math.max(0, round1(from + delta)) })
+  }
   const commitW = () => {
     const n = Number(wStr)
     onResult({ weightKg: wStr === '' ? 0 : Number.isNaN(n) ? (item.weightKg ?? 0) : n })
@@ -45,6 +50,7 @@ export default function MenuItemRow({ item, onToggle, onResult }: Props) {
           type="checkbox"
           checked={item.done}
           onChange={(e) => onToggle(e.target.checked)}
+          aria-label={`${item.name} done`}
           className="h-6 w-6 shrink-0 accent-[#01A09B]"
         />
         <div className="min-w-0 flex-1">

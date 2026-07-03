@@ -69,6 +69,7 @@ export default function MonthCalendar({ menus, onSelectDate }: Props) {
               key={c.date}
               onClick={() => onSelectDate?.(c.date)}
               title={`${c.date}${c.pct === null ? '' : ' · ' + toPct(c.pct) + '%'}`}
+              aria-label={`${c.date}, ${c.status}${c.pct === null ? '' : ', ' + toPct(c.pct) + '%'}`}
               className={`flex aspect-square flex-col items-center justify-center rounded-lg text-xs ${
                 STATUS_BG[c.status]
               } ${c.date === now ? 'ring-2 ring-[#01A09B]' : ''}`}

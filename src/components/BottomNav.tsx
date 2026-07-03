@@ -21,7 +21,7 @@ export default function BottomNav() {
                 }`
               }
             >
-              <span className="text-lg leading-none">{t.icon}</span>
+              <span className="text-lg leading-none" aria-hidden="true">{t.icon}</span>
               <span>{t.label}</span>
             </NavLink>
           </li>

@@ -22,12 +22,6 @@ export function weekdayOf(iso: string): number {
   return fromISODate(iso).getDay()
 }
 
-/** 土日かどうか（セッション時間の長短に使う）。 */
-export function isWeekend(iso: string): boolean {
-  const wd = weekdayOf(iso)
-  return wd === 0 || wd === 6
-}
-
 /** iso から n 日加算（負も可）した 'YYYY-MM-DD'。 */
 export function addDays(iso: string, n: number): string {
   const d = fromISODate(iso)

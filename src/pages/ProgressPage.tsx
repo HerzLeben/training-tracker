@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import PlanSummary from '../components/PlanSummary'
 import AdherenceSummary from '../components/AdherenceSummary'
 import MonthCalendar from '../components/MonthCalendar'
@@ -13,6 +13,7 @@ export default function ProgressPage() {
   const menus = useMenus()
   const metrics = useMetrics()
   const [selected, setSelected] = useState<string | null>(null)
+  const closeDetail = useCallback(() => setSelected(null), [])
 
   if (!settings || !menus || !metrics) {
     return <div className="text-slate-500">Loading…</div>
@@ -39,7 +40,7 @@ export default function ProgressPage() {
       <MonthCalendar menus={menus} onSelectDate={setSelected} />
       <AdherenceChart menus={menus} />
 
-      {selected && <DayDetail date={selected} onClose={() => setSelected(null)} />}
+      {selected && <DayDetail date={selected} onClose={closeDetail} />}
     </div>
   )
 }

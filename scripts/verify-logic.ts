@@ -171,6 +171,23 @@ check('workoutStats: 未実施は0/前回なし', (() => {
 })())
 const lifts = lastLiftByExercise(histMenus, '2026-06-27')
 check('lastLift: 最新の重量42.5', lifts['a']?.weightKg === 42.5)
+check('lastLift: workoutId限定で対象外はなし', lastLiftByExercise(histMenus, '2026-06-27', 'w-back')['a'] === undefined)
+
+// count は今日/未来を含めない
+const futureMenus: DailyMenu[] = [
+  ...histMenus,
+  { date: '2026-06-27', workoutId: 'w-chest', workoutName: 'Chest', generatedAt: 0, items: [
+    { exerciseId: 'a', name: 'Bench', targetSets: 3, targetReps: '10', done: false } ] },
+  { date: '2026-07-10', workoutId: 'w-chest', workoutName: 'Chest', generatedAt: 0, items: [
+    { exerciseId: 'a', name: 'Bench', targetSets: 3, targetReps: '10', done: true } ] },
+]
+check('workoutStats: 今日/未来を除外し2', workoutStats(futureMenus, 'w-chest', '2026-06-27').count === 2)
+
+// completion は壊れた items でも落ちず null
+check('completion: items不正はnull', completion({ date: 'x', generatedAt: 0 } as never) === null)
+
+// CSV は非ISO日付を除外
+check('CSV: 非ISO日付を除外', parseMetricsCSV('date,weightKg\n2026/07/03,70\n2026-07-04,71').length === 1)
 
 console.log(`\n${pass} passed, ${fail} failed`)
 process.exit(fail === 0 ? 0 : 1)

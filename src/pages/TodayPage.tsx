@@ -8,7 +8,7 @@ import { coreStreak } from '../lib/adherence'
 import { workoutStats, daysAgoLabel } from '../lib/history'
 import { formatSessionText } from '../lib/share'
 import { shareText } from '../lib/shareTarget'
-import { todayISO, weekdayLabel } from '../lib/date'
+import { todayISO, weekdayLabel, weekdayOf } from '../lib/date'
 import { CARD } from '../lib/styles'
 import TodayMenu from '../components/TodayMenu'
 import CoreBlock from '../components/CoreBlock'
@@ -20,10 +20,16 @@ export default function TodayPage() {
   const allMenus = useMenus()
   const [picking, setPicking] = useState(false)
 
-  const wd = weekdayLabel(new Date(today).getDay())
+  const wd = weekdayLabel(weekdayOf(today))
   const showPicker = picking || (menu === undefined && workouts !== undefined)
 
   const pick = async (w: Workout) => {
+    // 既に今日の記録がある状態で別メニューに切り替えると実績が消えるため確認。
+    const logged =
+      menu &&
+      (menu.items.some((i) => i.done || i.reps !== undefined) ||
+        (menu.coreItems?.some((c) => c.done) ?? false))
+    if (logged && !window.confirm("Switch workout? Today's logged records will be reset.")) return
     await startSession(today, w)
     setPicking(false)
   }

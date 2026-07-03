@@ -87,18 +87,20 @@ export async function listMenus(): Promise<DailyMenu[]> {
 /** 指定日のセッションをワークアウトから生成して保存（既存は上書き＝実績リセット）。 */
 export async function startSession(date: string, workout: Workout): Promise<DailyMenu> {
   const [settings, history] = await Promise.all([getSettings(), listMenus()])
-  const last = lastLiftByExercise(history, date)
+  const last = lastLiftByExercise(history, date, workout.id)
   const session = buildSession(date, workout, settings.dailyCore, last)
   await db.menus.put(session)
   return session
 }
 
-/** 指定日のメニューを読み込み、mutate を適用して保存（無ければ何もしない）。 */
+/** 指定日のメニューを読み込み、mutate を適用して保存（無ければ何もしない）。原子的に行う。 */
 async function updateMenu(date: string, mutate: (menu: DailyMenu) => void): Promise<void> {
-  const menu = await db.menus.get(date)
-  if (!menu) return
-  mutate(menu)
-  await db.menus.put(menu)
+  await db.transaction('rw', db.menus, async () => {
+    const menu = await db.menus.get(date)
+    if (!menu) return
+    mutate(menu)
+    await db.menus.put(menu)
+  })
 }
 
 /** 指定日の種目チェックを更新。 */

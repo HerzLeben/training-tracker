@@ -10,7 +10,7 @@ export default function AppUpdate() {
     setBusy(true)
     try {
       const reg = await navigator.serviceWorker?.getRegistration()
-      navigator.serviceWorker?.addEventListener('controllerchange', () => location.reload())
+      navigator.serviceWorker?.addEventListener('controllerchange', () => location.reload(), { once: true })
       await reg?.update()
     } catch {
       // 取得失敗時もとりあえずリロード

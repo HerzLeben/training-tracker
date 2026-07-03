@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import type { BodyMetric } from '../types'
 import { upsertMetric } from '../db/repo'
 import { todayISO } from '../lib/date'
 import { CARD, FIELD } from '../lib/styles'
@@ -19,7 +20,12 @@ export default function BodyMetricForm() {
       setMsg('Enter at least one value.')
       return
     }
-    await upsertMetric({ date, weightKg, bodyFatPct, muscleKg })
+    // undefined のキーは持たせない（往復時に形が揃う）。
+    const m: BodyMetric = { date }
+    if (weightKg !== undefined) m.weightKg = weightKg
+    if (bodyFatPct !== undefined) m.bodyFatPct = bodyFatPct
+    if (muscleKg !== undefined) m.muscleKg = muscleKg
+    await upsertMetric(m)
     setMsg('Saved.')
     setWeight('')
     setFat('')
@@ -33,7 +39,7 @@ export default function BodyMetricForm() {
     <form onSubmit={submit} className={`space-y-3 ${CARD} p-4`}>
       <div>
         <label className="mb-1 block text-xs text-slate-500">Date</label>
-        <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={field} />
+        <input type="date" max={todayISO()} value={date} onChange={(e) => setDate(e.target.value)} className={field} />
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>

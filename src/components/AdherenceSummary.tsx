@@ -33,7 +33,7 @@ export default function AdherenceSummary({ menus, onSelectDate }: Props) {
           <div className="text-3xl font-bold text-[#01A09B]">
             {rate30 === null ? '—' : `${rate30}%`}
           </div>
-          <div className="mt-1 text-xs text-slate-500">30-day completion</div>
+          <div className="mt-1 text-xs text-slate-500">Avg completion (30d)</div>
         </div>
       </div>
 
@@ -44,6 +44,7 @@ export default function AdherenceSummary({ menus, onSelectDate }: Props) {
             <button
               key={c.date}
               onClick={() => onSelectDate?.(c.date)}
+              aria-label={`${c.date}, ${c.status}${c.pct === null ? '' : ', ' + toPct(c.pct) + '%'}`}
               className="flex flex-1 flex-col items-center gap-1"
             >
               <div className="text-[10px] text-slate-400">{weekdayLabel(c.weekday)}</div>

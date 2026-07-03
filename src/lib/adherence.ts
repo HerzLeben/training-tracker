@@ -7,9 +7,9 @@ import { toPct } from './number'
 
 export const ACHIEVED_THRESHOLD = 0.8
 
-/** メニュー1日の達成率（0..1）。種目なしは null。 */
+/** メニュー1日の達成率（0..1）。種目なし・不正データは null（インポート破損に耐性）。 */
 export function completion(menu: DailyMenu | undefined): number | null {
-  if (!menu || menu.items.length === 0) return null
+  if (!menu || !Array.isArray(menu.items) || menu.items.length === 0) return null
   return menu.items.filter((i) => i.done).length / menu.items.length
 }
 

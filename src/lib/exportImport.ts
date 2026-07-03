@@ -115,21 +115,31 @@ export async function importMetricsCSV(text: string): Promise<number> {
   return metrics.length
 }
 
-/** JSON バックアップを取り込み（マージ）。件数を返す。 */
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
+
+/** JSON バックアップを取り込み（マージ）。壊れたレコードは弾く。件数を返す。 */
 export async function importJSON(text: string): Promise<{ workouts: number; menus: number; metrics: number }> {
   const data = JSON.parse(text) as Partial<Backup>
   if (data.app !== 'training-tracker') {
     throw new Error('Not a Training Tracker backup file.')
   }
+
+  // 破損レコードで集計/描画が壊れないよう、最低限の形を検証してから書き込む。
+  const workouts = (data.workouts ?? []).filter(
+    (w): w is Workout => !!w && typeof w.id === 'string' && Array.isArray(w.items),
+  )
+  const menus = (data.menus ?? []).filter(
+    (m): m is DailyMenu => !!m && ISO_DATE.test(m.date) && Array.isArray(m.items),
+  )
+  const metrics = (data.metrics ?? []).filter(
+    (m): m is BodyMetric => !!m && ISO_DATE.test(m.date),
+  )
+
   await db.transaction('rw', db.settings, db.workouts, db.menus, db.metrics, async () => {
     if (data.settings) await db.settings.put({ ...data.settings, id: 'app' })
-    if (data.workouts?.length) await db.workouts.bulkPut(data.workouts)
-    if (data.menus?.length) await db.menus.bulkPut(data.menus)
-    if (data.metrics?.length) await db.metrics.bulkPut(data.metrics)
+    if (workouts.length) await db.workouts.bulkPut(workouts)
+    if (menus.length) await db.menus.bulkPut(menus)
+    if (metrics.length) await db.metrics.bulkPut(metrics)
   })
-  return {
-    workouts: data.workouts?.length ?? 0,
-    menus: data.menus?.length ?? 0,
-    metrics: data.metrics?.length ?? 0,
-  }
+  return { workouts: workouts.length, menus: menus.length, metrics: metrics.length }
 }
