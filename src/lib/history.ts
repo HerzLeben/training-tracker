@@ -1,5 +1,5 @@
 import type { DailyMenu } from '../types'
-import { diffDays, todayISO } from './date'
+import { addDays, diffDays, todayISO } from './date'
 
 // 履歴の集計（前回実施日・回数）と、前回の実績重量の取り出し。
 
@@ -23,6 +23,31 @@ export function workoutStats(menus: DailyMenu[], workoutId: string, today = toda
     daysSince: lastDate ? diffDays(lastDate, today) : undefined,
     count: past.length,
   }
+}
+
+export interface WindowCounts {
+  /** ワークアウトid → ジム実施回数。 */
+  byWorkout: Record<string, number>
+  personal: number
+  home: number
+  rest: number
+  skipped: number
+}
+
+/** 直近 windowDays 日の、メニュー別・種別別の回数（偏りの把握用）。 */
+export function windowCounts(menus: DailyMenu[], windowDays = 30, today = todayISO()): WindowCounts {
+  const from = addDays(today, -(windowDays - 1))
+  const out: WindowCounts = { byWorkout: {}, personal: 0, home: 0, rest: 0, skipped: 0 }
+  for (const m of menus) {
+    if (m.date < from || m.date > today) continue
+    const t = m.type ?? 'gym'
+    if (t === 'gym') {
+      if (m.workoutId) out.byWorkout[m.workoutId] = (out.byWorkout[m.workoutId] ?? 0) + 1
+    } else {
+      out[t]++
+    }
+  }
+  return out
 }
 
 /** 「N日前」表記。 */

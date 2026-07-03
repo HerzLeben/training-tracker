@@ -16,7 +16,22 @@ const MONTHS = [
   'July', 'August', 'September', 'October', 'November', 'December',
 ]
 
+// 一目でどのトレをしたか分かる短い記号。gym はメニュー名の最後の語の2文字。
+function dayCode(menu: DailyMenu | undefined): string {
+  if (!menu) return ''
+  const t = menu.type ?? 'gym'
+  if (t === 'personal') return 'PT'
+  if (t === 'home') return 'Ho'
+  if (t === 'rest') return 'R'
+  if (t === 'skipped') return '×'
+  const name = menu.workoutName
+  if (!name) return 'Gym'
+  const last = name.split(/[·\s/]+/).filter(Boolean).pop() ?? name
+  return last.slice(0, 2)
+}
+
 export default function MonthCalendar({ menus, onSelectDate }: Props) {
+  const menuByDate = new Map(menus.map((m) => [m.date, m]))
   const now = todayISO()
   const [y, m] = now.split('-').map(Number)
   // Anchor view to the current month; allow navigating back/forward.
@@ -70,11 +85,12 @@ export default function MonthCalendar({ menus, onSelectDate }: Props) {
               onClick={() => onSelectDate?.(c.date)}
               title={`${c.date}${c.pct === null ? '' : ' · ' + toPct(c.pct) + '%'}`}
               aria-label={`${c.date}, ${c.status}${c.pct === null ? '' : ', ' + toPct(c.pct) + '%'}`}
-              className={`flex aspect-square flex-col items-center justify-center rounded-lg text-xs ${
+              className={`flex aspect-square flex-col items-center justify-center gap-0.5 rounded-lg leading-none ${
                 STATUS_BG[c.status]
               } ${c.date === now ? 'ring-2 ring-[#01A09B]' : ''}`}
             >
-              {c.day}
+              <span className="text-[10px] opacity-70">{c.day}</span>
+              <span className="text-[11px] font-semibold">{dayCode(menuByDate.get(c.date))}</span>
             </button>
           ),
         )}

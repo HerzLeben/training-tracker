@@ -13,7 +13,7 @@ import {
 import { formatSessionText, formatWeeklyText } from '../src/lib/share.ts'
 import { parseMetricsCSV } from '../src/lib/csv.ts'
 import { SAMPLE_WORKOUTS } from '../src/data/sampleProgram.ts'
-import { workoutStats, lastLiftByExercise } from '../src/lib/history.ts'
+import { workoutStats, lastLiftByExercise, windowCounts } from '../src/lib/history.ts'
 import { buildPlan } from '../src/lib/plan.ts'
 import type { BodyMetric, DailyMenu, PrescribedExercise, Settings, Workout } from '../src/types/index.ts'
 
@@ -217,6 +217,20 @@ check('ストリーク: rest で途切れ1', st2 === 1)
 
 // overallRate は rest/skipped を除外し personal=100%
 check('overallRate: personal/gym平均', overallRate([dm('2026-07-01', 'gym', 2, 4), dm('2026-07-02', 'personal'), dm('2026-07-03', 'rest')], 30, '2026-07-03') === 75)
+
+// メニュー別回数（偏り把握）
+const balMenus: DailyMenu[] = [
+  { date: '2026-07-01', type: 'gym', workoutId: 'w-chest', workoutName: 'Chest', generatedAt: 0, items: [{ exerciseId: 'a', name: 'x', targetSets: 3, targetReps: '10', done: true }] },
+  { date: '2026-07-02', type: 'gym', workoutId: 'w-chest', workoutName: 'Chest', generatedAt: 0, items: [{ exerciseId: 'a', name: 'x', targetSets: 3, targetReps: '10', done: true }] },
+  { date: '2026-07-03', type: 'gym', workoutId: 'w-back', workoutName: 'Back', generatedAt: 0, items: [{ exerciseId: 'a', name: 'x', targetSets: 3, targetReps: '10', done: true }] },
+  { date: '2026-07-04', type: 'personal', generatedAt: 0, items: [] },
+  { date: '2026-06-01', type: 'gym', workoutId: 'w-chest', workoutName: 'Chest', generatedAt: 0, items: [{ exerciseId: 'a', name: 'x', targetSets: 3, targetReps: '10', done: true }] },
+]
+const wcCounts = windowCounts(balMenus, 30, '2026-07-05')
+check('windowCounts: Chest 2回(30日窓)', wcCounts.byWorkout['w-chest'] === 2)
+check('windowCounts: Back 1回', wcCounts.byWorkout['w-back'] === 1)
+check('windowCounts: personal 1', wcCounts.personal === 1)
+check('windowCounts: 窓外は除外', wcCounts.byWorkout['w-chest'] !== 3)
 
 console.log(`\n${pass} passed, ${fail} failed`)
 process.exit(fail === 0 ? 0 : 1)
