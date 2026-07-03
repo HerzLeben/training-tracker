@@ -1,37 +1,68 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import type { Workout } from '../types'
-import { toggleMenuItem, toggleCoreItem, setItemResult, startSession, loadSampleProgram } from '../db/repo'
+import type { SessionType, Workout } from '../types'
+import {
+  toggleMenuItem,
+  toggleCoreItem,
+  setItemResult,
+  startSession,
+  loadSampleProgram,
+  markDay,
+  deleteSession,
+} from '../db/repo'
 import { useMenu, useMenus, useWorkouts } from '../db/hooks'
-import { BTN_PRIMARY } from '../lib/styles'
+import { BTN_PRIMARY, BTN_SECONDARY, CARD } from '../lib/styles'
 import { coreStreak } from '../lib/adherence'
 import { workoutStats, daysAgoLabel } from '../lib/history'
 import { formatSessionText } from '../lib/share'
 import { shareText } from '../lib/shareTarget'
 import { todayISO, weekdayLabel, weekdayOf } from '../lib/date'
-import { CARD } from '../lib/styles'
 import TodayMenu from '../components/TodayMenu'
 import CoreBlock from '../components/CoreBlock'
+import DayTypePicker from '../components/DayTypePicker'
+
+const SUMMARY: Record<Exclude<SessionType, 'gym'>, { emoji: string; label: string; note: string }> = {
+  personal: { emoji: '🧑‍🏫', label: 'Personal training', note: 'Marked done' },
+  home: { emoji: '🏠', label: 'Home workout', note: 'Marked done' },
+  rest: { emoji: '🛌', label: 'Rest day', note: 'Recover well' },
+  skipped: { emoji: '❌', label: 'Skipped', note: 'Back at it next time' },
+}
 
 export default function TodayPage() {
   const today = todayISO()
   const workouts = useWorkouts()
   const menu = useMenu(today)
   const allMenus = useMenus()
-  const [picking, setPicking] = useState(false)
+  const [pickingType, setPickingType] = useState(false)
+  const [pickingWorkout, setPickingWorkout] = useState(false)
 
   const wd = weekdayLabel(weekdayOf(today))
-  const showPicker = picking || (menu === undefined && workouts !== undefined)
+  const kind: SessionType | undefined = menu ? menu.type ?? 'gym' : undefined
+  const gymLogged =
+    !!menu && kind === 'gym' && menu.items.some((i) => i.done || i.reps !== undefined)
 
-  const pick = async (w: Workout) => {
-    // 既に今日の記録がある状態で別メニューに切り替えると実績が消えるため確認。
-    const logged =
-      menu &&
-      (menu.items.some((i) => i.done || i.reps !== undefined) ||
-        (menu.coreItems?.some((c) => c.done) ?? false))
-    if (logged && !window.confirm("Switch workout? Today's logged records will be reset.")) return
+  const chooseType = async (t: SessionType) => {
+    if (t === 'gym') {
+      setPickingType(false)
+      setPickingWorkout(true)
+      return
+    }
+    if (gymLogged && !window.confirm("Change day type? Today's logged records will be cleared.")) return
+    await markDay(today, t)
+    setPickingType(false)
+  }
+
+  const pickWorkout = async (w: Workout) => {
+    if (gymLogged && !window.confirm("Switch workout? Today's logged records will be reset.")) return
     await startSession(today, w)
-    setPicking(false)
+    setPickingWorkout(false)
+    setPickingType(false)
+  }
+
+  const clearDay = async () => {
+    if (!window.confirm("Clear today's record?")) return
+    await deleteSession(today)
+    setPickingType(false)
   }
 
   const handleShare = () => {
@@ -63,17 +94,15 @@ export default function TodayPage() {
             Load my program
           </button>
         </div>
-      ) : showPicker ? (
+      ) : pickingWorkout ? (
         <div className={`${CARD} space-y-2 p-4`}>
-          <div className="text-sm font-medium text-slate-700">
-            {menu ? "Switch workout (resets today's records)" : "Pick today's workout"}
-          </div>
+          <div className="text-sm font-medium text-slate-700">Pick today's workout</div>
           {workouts.map((w) => {
             const st = workoutStats(allMenus ?? [], w.id, today)
             return (
               <button
                 key={w.id}
-                onClick={() => pick(w)}
+                onClick={() => pickWorkout(w)}
                 className="w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-left active:bg-slate-50"
               >
                 <div className="font-medium text-slate-800">{w.name}</div>
@@ -90,16 +119,31 @@ export default function TodayPage() {
           >
             Load trainer program (6-day)
           </button>
+          <button
+            onClick={() => setPickingWorkout(false)}
+            className="w-full rounded-xl py-2 text-sm text-slate-500 active:bg-slate-50"
+          >
+            Back
+          </button>
+        </div>
+      ) : pickingType || !menu ? (
+        <div className={`${CARD} space-y-2 p-4`}>
+          <DayTypePicker
+            title={menu ? 'Change day type' : 'What did you do today?'}
+            current={kind}
+            onSelect={chooseType}
+            onClear={menu ? clearDay : undefined}
+          />
           {menu && (
             <button
-              onClick={() => setPicking(false)}
+              onClick={() => setPickingType(false)}
               className="w-full rounded-xl py-2 text-sm text-slate-500 active:bg-slate-50"
             >
               Cancel
             </button>
           )}
         </div>
-      ) : menu ? (
+      ) : kind === 'gym' ? (
         <>
           <TodayMenu
             menu={menu}
@@ -107,13 +151,38 @@ export default function TodayPage() {
             onToggle={(id, done) => void toggleMenuItem(today, id, done)}
             onResult={(id, patch) => void setItemResult(today, id, patch)}
             onShare={handleShare}
-            onChangeWorkout={() => setPicking(true)}
+            onChangeWorkout={() => setPickingType(true)}
           />
           <CoreBlock
             items={menu.coreItems ?? []}
             streak={coreStreak(allMenus ?? [])}
             onToggle={(id, done) => void toggleCoreItem(today, id, done)}
           />
+        </>
+      ) : kind ? (
+        <>
+          <div className={`${CARD} p-6 text-center`}>
+            <div className="mb-2 text-4xl" aria-hidden="true">
+              {SUMMARY[kind].emoji}
+            </div>
+            <h2 className="text-lg font-semibold text-slate-800">{SUMMARY[kind].label}</h2>
+            <p className="text-sm text-slate-500">{SUMMARY[kind].note}</p>
+          </div>
+          {(kind === 'personal' || kind === 'home') && (
+            <CoreBlock
+              items={menu.coreItems ?? []}
+              streak={coreStreak(allMenus ?? [])}
+              onToggle={(id, done) => void toggleCoreItem(today, id, done)}
+            />
+          )}
+          <div className="grid grid-cols-2 gap-2">
+            <button onClick={() => setPickingType(true)} className={`${BTN_SECONDARY} py-2 text-sm`}>
+              Change
+            </button>
+            <button onClick={handleShare} className={`${BTN_PRIMARY} py-2 text-sm font-medium`}>
+              Share to LINE
+            </button>
+          </div>
         </>
       ) : null}
     </div>

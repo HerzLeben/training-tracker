@@ -12,6 +12,8 @@ interface Props {
 const cellMark: Record<string, string> = {
   done: '◎',
   partial: '△',
+  rest: 'R',
+  skipped: 'S',
   none: '·',
   future: '·',
 }
@@ -20,7 +22,10 @@ export default function AdherenceSummary({ menus, onSelectDate }: Props) {
   const streak = currentStreak(menus)
   const rate30 = overallRate(menus, 30)
   const week = weekCalendar(menus, 7)
-  const nameByDate = new Map(menus.map((m) => [m.date, m.workoutName]))
+  const TYPE_SHORT: Record<string, string> = { personal: 'PT', home: 'Home', rest: 'Rest', skipped: 'Skip' }
+  const labelByDate = new Map(
+    menus.map((m) => [m.date, m.type && m.type !== 'gym' ? TYPE_SHORT[m.type] : m.workoutName]),
+  )
 
   return (
     <div className="space-y-4">
@@ -57,7 +62,7 @@ export default function AdherenceSummary({ menus, onSelectDate }: Props) {
                 {cellMark[c.status]}
               </div>
               <div className="h-3 w-full truncate text-center text-[9px] leading-3 text-slate-500">
-                {nameByDate.get(c.date) ?? ''}
+                {labelByDate.get(c.date) ?? ''}
               </div>
             </button>
           ))}
@@ -65,8 +70,10 @@ export default function AdherenceSummary({ menus, onSelectDate }: Props) {
         <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-slate-400">
           <span>◎ Done</span>
           <span>△ Partial</span>
-          <span>· No session</span>
-          <span className="text-slate-400">・tap a day to view/edit</span>
+          <span>R Rest</span>
+          <span>S Skipped</span>
+          <span>· None</span>
+          <span>・tap a day to view/edit</span>
         </div>
       </div>
     </div>

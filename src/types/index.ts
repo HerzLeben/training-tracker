@@ -4,6 +4,14 @@
 /** 種目のカテゴリ（任意のタグ）。core は体幹（重量を扱わない想定）。 */
 export type Category = 'push' | 'pull' | 'legs' | 'core'
 
+/**
+ * その日の種別。
+ * gym=プログラムメニューを記録 / personal=パーソナル(実施マーク) /
+ * home=自宅(実施マーク) / rest=休養 / skipped=サボった。
+ * 未設定の既存データは gym 相当（items あり）として扱う。
+ */
+export type SessionType = 'gym' | 'personal' | 'home' | 'rest' | 'skipped'
+
 /** プログラム上の処方（トレーナー指定の目標）。 */
 export interface PrescribedExercise {
   id: string
@@ -47,6 +55,8 @@ export interface MenuItem {
 /** ある日のセッション。date は 'YYYY-MM-DD'（1日1セッション）。 */
 export interface DailyMenu {
   date: string
+  /** その日の種別（未設定は gym 扱い）。 */
+  type?: SessionType
   workoutId?: string
   workoutName?: string
   items: MenuItem[]

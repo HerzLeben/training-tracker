@@ -1,25 +1,36 @@
-import type { DailyMenu } from '../types'
+import type { DailyMenu, SessionType } from '../types'
 import { addDays, todayISO, toISODate, weekdayOf } from './date'
 import { toPct } from './number'
 
-// 達成率・ストリーク・カレンダーの集計ロジック。
-// メニューはトレーナー作成のため「休養日」概念は持たず、セッションの有無と達成で判定する。
+// 達成率・ストリーク・カレンダーの集計。日の種別（gym/personal/home/rest/skipped）で判定する。
 
 export const ACHIEVED_THRESHOLD = 0.8
 
-/** メニュー1日の達成率（0..1）。種目なし・不正データは null（インポート破損に耐性）。 */
+/** gym メニュー1日の達成率（0..1）。種目なし・不正データは null。 */
 export function completion(menu: DailyMenu | undefined): number | null {
   if (!menu || !Array.isArray(menu.items) || menu.items.length === 0) return null
   return menu.items.filter((i) => i.done).length / menu.items.length
 }
 
-export function isAchieved(menu: DailyMenu | undefined): boolean {
-  const c = completion(menu)
-  return c !== null && c >= ACHIEVED_THRESHOLD
+/** 記録の種別（未設定の既存データは gym 扱い、記録なしは undefined）。 */
+function typeOf(menu: DailyMenu | undefined): SessionType | undefined {
+  if (!menu) return undefined
+  return menu.type ?? 'gym'
 }
 
-/** done=達成 / partial=実施したが未達 / none=セッション無し / future=未来。 */
-export type DayStatus = 'done' | 'partial' | 'none' | 'future'
+/**
+ * その日の「達成度」(0..1)。トレーニングした日のみ数値、そうでなければ null。
+ * personal/home=1、gym=種目達成率、rest/skipped/記録なし=null。
+ */
+export function trainedFraction(menu: DailyMenu | undefined): number | null {
+  const t = typeOf(menu)
+  if (t === undefined || t === 'rest' || t === 'skipped') return null
+  if (t === 'personal' || t === 'home') return 1
+  return completion(menu) // gym
+}
+
+/** done=達成 / partial=未達 / rest=休養 / skipped=サボった / none=記録なし / future=未来。 */
+export type DayStatus = 'done' | 'partial' | 'rest' | 'skipped' | 'none' | 'future'
 
 export interface DayCell {
   date: string
@@ -30,10 +41,14 @@ export interface DayCell {
 
 function statusFor(date: string, menu: DailyMenu | undefined, today: string): DayStatus {
   if (date > today) return 'future'
-  const c = completion(menu)
+  const t = typeOf(menu)
+  if (t === undefined) return 'none'
+  if (t === 'rest') return 'rest'
+  if (t === 'skipped') return 'skipped'
+  if (t === 'personal' || t === 'home') return 'done'
+  const c = completion(menu) // gym
   if (c === null) return 'none'
-  if (c >= ACHIEVED_THRESHOLD) return 'done'
-  return 'partial'
+  return c >= ACHIEVED_THRESHOLD ? 'done' : 'partial'
 }
 
 const byDate = (menus: DailyMenu[]): Map<string, DailyMenu> =>
@@ -42,7 +57,7 @@ const byDate = (menus: DailyMenu[]): Map<string, DailyMenu> =>
 /** 1日分のカレンダーセルを組み立てる。 */
 function buildCell(date: string, map: Map<string, DailyMenu>, today: string): DayCell {
   const menu = map.get(date)
-  return { date, weekday: weekdayOf(date), status: statusFor(date, menu, today), pct: completion(menu) }
+  return { date, weekday: weekdayOf(date), status: statusFor(date, menu, today), pct: trainedFraction(menu) }
 }
 
 /** 今日を末尾とする直近 days 日の各日ステータス。 */
@@ -117,15 +132,16 @@ function walkStreak(today: string, evalDay: (date: string) => DayEval): number {
 }
 
 /**
- * 現在のストリーク（達成セッションが続いた日数）。
- * セッションの無い日は途切れさせず、実施したが未達の日で途切れる。
+ * 現在のストリーク（トレーニングした日が続いた数）。
+ * done=継続 / rest・skipped・未達=途切れる / 記録なし=中立。
  */
 export function currentStreak(menus: DailyMenu[], today = todayISO()): number {
   const map = byDate(menus)
   return walkStreak(today, (date) => {
-    const c = completion(map.get(date))
-    if (c === null) return 'neutral' // セッション無し（休養扱い）
-    return c >= ACHIEVED_THRESHOLD ? 'achieved' : 'failed'
+    const s = statusFor(date, map.get(date), today)
+    if (s === 'done') return 'achieved'
+    if (s === 'none') return 'neutral'
+    return 'failed' // partial / rest / skipped
   })
 }
 
@@ -138,19 +154,22 @@ export function coreStreak(menus: DailyMenu[], today = todayISO()): number {
   })
 }
 
-/** 実施日（item を持つ）の日次達成率の時系列（チャート用）。 */
+/** トレーニングした日の達成率の時系列（チャート用）。 */
 export function adherenceSeries(menus: DailyMenu[]): { date: string; pct: number }[] {
   return menus
-    .filter((m) => m.items.length > 0)
+    .map((m) => ({ date: m.date, f: trainedFraction(m) }))
+    .filter((x): x is { date: string; f: number } => x.f !== null)
     .sort((a, b) => a.date.localeCompare(b.date))
-    .map((m) => ({ date: m.date, pct: toPct(completion(m) ?? 0) }))
+    .map((x) => ({ date: x.date, pct: toPct(x.f) }))
 }
 
-/** 直近 windowDays 日の実施日平均達成率（0..100）。データなしは null。 */
+/** 直近 windowDays 日のトレーニング日平均達成率（0..100）。データなしは null。 */
 export function overallRate(menus: DailyMenu[], windowDays = 30, today = todayISO()): number | null {
   const from = addDays(today, -(windowDays - 1))
-  const inWindow = menus.filter((m) => m.items.length > 0 && m.date >= from && m.date <= today)
-  if (inWindow.length === 0) return null
-  const sum = inWindow.reduce((acc, m) => acc + (completion(m) ?? 0), 0)
-  return toPct(sum / inWindow.length)
+  const fracs = menus
+    .filter((m) => m.date >= from && m.date <= today)
+    .map((m) => trainedFraction(m))
+    .filter((f): f is number => f !== null)
+  if (fracs.length === 0) return null
+  return toPct(fracs.reduce((a, b) => a + b, 0) / fracs.length)
 }

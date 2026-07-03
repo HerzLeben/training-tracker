@@ -23,6 +23,8 @@ export function itemBorder(done: boolean): string {
 export const STATUS_BG: Record<string, string> = {
   done: 'bg-[#01A09B] text-white',
   partial: 'bg-amber-400 text-slate-900',
+  rest: 'bg-sky-200 text-sky-800',
+  skipped: 'bg-rose-300 text-rose-900',
   none: 'bg-slate-100 text-slate-400',
   future: 'bg-slate-50 text-slate-300',
 }

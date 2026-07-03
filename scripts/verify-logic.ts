@@ -3,10 +3,12 @@
 import { buildSession } from '../src/engine/session.ts'
 import {
   completion,
+  trainedFraction,
   currentStreak,
   coreStreak,
   weekCalendar,
   monthView,
+  overallRate,
 } from '../src/lib/adherence.ts'
 import { formatSessionText, formatWeeklyText } from '../src/lib/share.ts'
 import { parseMetricsCSV } from '../src/lib/csv.ts'
@@ -96,7 +98,7 @@ check('共有: 達成率', st.includes('達成: 1/2 (50%)'))
 
 const wt = formatWeeklyText(gapMenus, '2026-06-27')
 check('週共有: 見出し', wt.includes('週次サマリー'))
-check('週共有: 件数', wt.includes('実施: 3回'))
+check('週共有: 件数', wt.includes('トレーニング: 3回'))
 check('週共有: 平均', wt.includes('平均達成: 100%'))
 
 // --- プラン（変更なし） ---
@@ -188,6 +190,33 @@ check('completion: items不正はnull', completion({ date: 'x', generatedAt: 0 }
 
 // CSV は非ISO日付を除外
 check('CSV: 非ISO日付を除外', parseMetricsCSV('date,weightKg\n2026/07/03,70\n2026-07-04,71').length === 1)
+
+// --- 日の種別（gym/personal/home/rest/skipped） ---
+const dm = (date: string, type: import('../src/types/index.ts').SessionType, done = 0, total = 0): DailyMenu => ({
+  date, type, generatedAt: 0,
+  items: Array.from({ length: total }, (_, i) => ({ exerciseId: `e${i}`, name: 'x', targetSets: 3, targetReps: '10', done: i < done })),
+})
+check('trainedFraction: personal=1', trainedFraction(dm('2026-07-01', 'personal')) === 1)
+check('trainedFraction: home=1', trainedFraction(dm('2026-07-01', 'home')) === 1)
+check('trainedFraction: rest=null', trainedFraction(dm('2026-07-01', 'rest')) === null)
+check('trainedFraction: skipped=null', trainedFraction(dm('2026-07-01', 'skipped')) === null)
+check('trainedFraction: gym=率', trainedFraction(dm('2026-07-01', 'gym', 2, 4)) === 0.5)
+
+// カレンダーの状態
+const typeWeek = [dm('2026-07-01', 'gym', 4, 4), dm('2026-07-02', 'personal'), dm('2026-07-03', 'rest'), dm('2026-07-04', 'skipped')]
+const wc = weekCalendar(typeWeek, 7, '2026-07-05')
+check('週: personal=done', wc.find((c) => c.date === '2026-07-02')?.status === 'done')
+check('週: rest=rest', wc.find((c) => c.date === '2026-07-03')?.status === 'rest')
+check('週: skipped=skipped', wc.find((c) => c.date === '2026-07-04')?.status === 'skipped')
+
+// ストリーク: rest も skipped も途切れる、personal/home/gym-done は継続
+const st1 = currentStreak([dm('2026-07-01', 'gym', 4, 4), dm('2026-07-02', 'personal'), dm('2026-07-03', 'home')], '2026-07-03')
+check('ストリーク: 連続トレ3', st1 === 3)
+const st2 = currentStreak([dm('2026-07-01', 'gym', 4, 4), dm('2026-07-02', 'rest'), dm('2026-07-03', 'gym', 4, 4)], '2026-07-03')
+check('ストリーク: rest で途切れ1', st2 === 1)
+
+// overallRate は rest/skipped を除外し personal=100%
+check('overallRate: personal/gym平均', overallRate([dm('2026-07-01', 'gym', 2, 4), dm('2026-07-02', 'personal'), dm('2026-07-03', 'rest')], 30, '2026-07-03') === 75)
 
 console.log(`\n${pass} passed, ${fail} failed`)
 process.exit(fail === 0 ? 0 : 1)

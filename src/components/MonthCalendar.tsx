@@ -83,7 +83,9 @@ export default function MonthCalendar({ menus, onSelectDate }: Props) {
       <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-slate-400">
         <span><span className="mr-1 inline-block h-2 w-2 rounded-sm bg-[#01A09B]" />Done</span>
         <span><span className="mr-1 inline-block h-2 w-2 rounded-sm bg-amber-400" />Partial</span>
-        <span><span className="mr-1 inline-block h-2 w-2 rounded-sm bg-slate-200" />No session</span>
+        <span><span className="mr-1 inline-block h-2 w-2 rounded-sm bg-sky-200" />Rest</span>
+        <span><span className="mr-1 inline-block h-2 w-2 rounded-sm bg-rose-300" />Skipped</span>
+        <span><span className="mr-1 inline-block h-2 w-2 rounded-sm bg-slate-200" />None</span>
       </div>
     </div>
   )

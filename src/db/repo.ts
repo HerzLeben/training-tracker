@@ -1,5 +1,5 @@
 import { db } from './db'
-import type { Workout, Settings, DailyMenu, BodyMetric, PrescribedExercise } from '../types'
+import type { Workout, Settings, DailyMenu, BodyMetric, PrescribedExercise, SessionType } from '../types'
 import { buildSession } from '../engine/session'
 import { round1 } from '../lib/number'
 import { lastLiftByExercise } from '../lib/history'
@@ -88,9 +88,36 @@ export async function listMenus(): Promise<DailyMenu[]> {
 export async function startSession(date: string, workout: Workout): Promise<DailyMenu> {
   const [settings, history] = await Promise.all([getSettings(), listMenus()])
   const last = lastLiftByExercise(history, date, workout.id)
-  const session = buildSession(date, workout, settings.dailyCore, last)
+  const session: DailyMenu = { ...buildSession(date, workout, settings.dailyCore, last), type: 'gym' }
   await db.menus.put(session)
   return session
+}
+
+/**
+ * ジム以外の種別（personal/home/rest/skipped）で当日を記録する。
+ * personal/home は毎日コア（プランク）を含め、rest/skipped は含めない。
+ */
+export async function markDay(date: string, type: Exclude<SessionType, 'gym'>): Promise<void> {
+  const settings = await getSettings()
+  const withCore = type === 'personal' || type === 'home'
+  const coreItems = withCore
+    ? settings.dailyCore.map((p) => ({
+        exerciseId: p.id,
+        name: p.name,
+        muscle: p.muscle,
+        category: p.category,
+        targetSets: p.targetSets,
+        targetReps: p.targetReps,
+        daily: true,
+        done: false,
+      }))
+    : []
+  await db.menus.put({ date, type, items: [], coreItems, generatedAt: Date.now() })
+}
+
+/** 指定日の記録を削除（クリア）。 */
+export async function deleteSession(date: string): Promise<void> {
+  await db.menus.delete(date)
 }
 
 /** 指定日のメニューを読み込み、mutate を適用して保存（無ければ何もしない）。原子的に行う。 */

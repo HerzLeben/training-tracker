@@ -1,26 +1,36 @@
 import { useEffect } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
+import type { SessionType } from '../types'
 import { db } from '../db/db'
-import { toggleMenuItem, toggleCoreItem, setItemResult } from '../db/repo'
+import { toggleMenuItem, toggleCoreItem, setItemResult, markDay, deleteSession } from '../db/repo'
 import { completion } from '../lib/adherence'
 import { toPct } from '../lib/number'
 import { weekdayLabel, weekdayOf } from '../lib/date'
 import { CARD } from '../lib/styles'
 import MenuItemRow from './MenuItemRow'
 import CoreItemRow from './CoreItemRow'
+import DayTypePicker from './DayTypePicker'
 
 interface Props {
   date: string
   onClose: () => void
 }
 
-// 過去の（または当日の）セッションを閲覧・編集するモーダル。
+const TYPE_TEXT: Record<SessionType, { emoji: string; label: string }> = {
+  gym: { emoji: '🏋️', label: 'Gym' },
+  personal: { emoji: '🧑‍🏫', label: 'Personal training' },
+  home: { emoji: '🏠', label: 'Home workout' },
+  rest: { emoji: '🛌', label: 'Rest day' },
+  skipped: { emoji: '❌', label: 'Skipped' },
+}
+
+// 過去の（または当日の）記録を閲覧・編集・種別変更・削除するモーダル。
 export default function DayDetail({ date, onClose }: Props) {
   const menu = useLiveQuery(() => db.menus.get(date), [date])
+  const kind: SessionType | undefined = menu ? menu.type ?? 'gym' : undefined
   const pct = completion(menu)
   const wd = weekdayLabel(weekdayOf(date))
 
-  // 背景（main スクロール）を固定し、Esc で閉じる。
   useEffect(() => {
     const main = document.querySelector('main')
     const prev = main?.style.overflow ?? ''
@@ -32,6 +42,22 @@ export default function DayDetail({ date, onClose }: Props) {
       window.removeEventListener('keydown', onKey)
     }
   }, [onClose])
+
+  const remark = async (t: SessionType) => {
+    if (t === 'gym') {
+      window.alert('To log a gym session, pick a workout on the Today tab.')
+      return
+    }
+    const logged = kind === 'gym' && !!menu?.items.some((i) => i.done || i.reps !== undefined)
+    if (logged && !window.confirm('Change type? Logged records for this day will be cleared.')) return
+    await markDay(date, t)
+  }
+  const remove = async () => {
+    if (window.confirm('Delete this day’s record?')) {
+      await deleteSession(date)
+      onClose()
+    }
+  }
 
   return (
     <div
@@ -48,20 +74,21 @@ export default function DayDetail({ date, onClose }: Props) {
               {date} ({wd})
             </div>
             <h2 className="text-lg font-semibold text-slate-800">
-              {menu?.workoutName ?? 'No session'}
+              {kind ? `${TYPE_TEXT[kind].emoji} ${menu?.workoutName ?? TYPE_TEXT[kind].label}` : 'No record'}
             </h2>
           </div>
           <div className="flex items-center gap-3">
-            {pct !== null && <span className="text-lg font-bold text-[#01A09B]">{toPct(pct)}%</span>}
+            {kind === 'gym' && pct !== null && (
+              <span className="text-lg font-bold text-[#01A09B]">{toPct(pct)}%</span>
+            )}
             <button onClick={onClose} className="text-2xl leading-none text-slate-400" aria-label="close">
               ×
             </button>
           </div>
         </div>
 
-        {!menu || menu.items.length === 0 ? (
-          <p className="py-6 text-center text-sm text-slate-400">No session recorded on this day.</p>
-        ) : (
+        {/* 本体 */}
+        {kind === 'gym' && menu && menu.items.length > 0 && (
           <div className="space-y-2">
             {menu.items.map((it) => (
               <MenuItemRow
@@ -71,23 +98,45 @@ export default function DayDetail({ date, onClose }: Props) {
                 onResult={(patch) => void setItemResult(date, it.exerciseId, patch)}
               />
             ))}
-
-            {menu.coreItems && menu.coreItems.length > 0 && (
-              <div className="pt-1">
-                <div className="mb-1 text-xs font-medium text-slate-500">Core</div>
-                <div className="space-y-2">
-                  {menu.coreItems.map((it) => (
-                    <CoreItemRow
-                      key={it.exerciseId}
-                      item={it}
-                      onToggle={(done) => void toggleCoreItem(date, it.exerciseId, done)}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         )}
+        {(kind === 'personal' || kind === 'home') && (
+          <p className="rounded-xl bg-[#e6f6f5] p-3 text-sm text-[#017a75]">
+            {TYPE_TEXT[kind].label} — done ✅
+          </p>
+        )}
+        {(kind === 'rest' || kind === 'skipped') && (
+          <p className="rounded-xl bg-slate-50 p-3 text-sm text-slate-600">{TYPE_TEXT[kind].label}</p>
+        )}
+
+        {/* コア（あれば編集可） */}
+        {menu?.coreItems && menu.coreItems.length > 0 && (
+          <div className="mt-3">
+            <div className="mb-1 text-xs font-medium text-slate-500">Core</div>
+            <div className="space-y-2">
+              {menu.coreItems.map((it) => (
+                <CoreItemRow
+                  key={it.exerciseId}
+                  item={it}
+                  onToggle={(done) => void toggleCoreItem(date, it.exerciseId, done)}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 種別変更・削除 */}
+        <div className="mt-4 space-y-2 border-t border-slate-200 pt-3">
+          <DayTypePicker title="Set day type" current={kind} onSelect={remark} hideGym />
+          {menu && (
+            <button
+              onClick={remove}
+              className="w-full rounded-xl border border-rose-200 py-2 text-sm text-rose-500 active:bg-rose-50"
+            >
+              Delete this day
+            </button>
+          )}
+        </div>
       </div>
     </div>
   )
