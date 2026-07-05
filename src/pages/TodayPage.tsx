@@ -14,7 +14,8 @@ import {
 } from '../db/repo'
 import { useMenu, useMenus, useWorkouts } from '../db/hooks'
 import { BTN_PRIMARY, BTN_SECONDARY, CARD } from '../lib/styles'
-import { coreStreak } from '../lib/adherence'
+import { completion, coreStreak } from '../lib/adherence'
+import { toPct } from '../lib/number'
 import { workoutStats, daysAgoLabel } from '../lib/history'
 import { formatSessionText } from '../lib/share'
 import { shareText } from '../lib/shareTarget'
@@ -37,6 +38,7 @@ export default function TodayPage() {
   const allMenus = useMenus()
   const [pickingType, setPickingType] = useState(false)
   const [pickingWorkout, setPickingWorkout] = useState(false)
+  const [finished, setFinished] = useState(false)
 
   const wd = weekdayLabel(weekdayOf(today))
   const kind: SessionType | undefined = menu ? menu.type ?? 'gym' : undefined
@@ -44,6 +46,7 @@ export default function TodayPage() {
     !!menu && kind === 'gym' && menu.items.some((i) => i.done || i.reps !== undefined)
 
   const chooseType = async (t: SessionType) => {
+    setFinished(false)
     if (t === 'gym') {
       setPickingType(false)
       setPickingWorkout(true)
@@ -57,6 +60,7 @@ export default function TodayPage() {
   const pickWorkout = async (w: Workout) => {
     if (gymLogged && !window.confirm("Switch workout? Today's logged records will be reset.")) return
     await startSession(today, w)
+    setFinished(false)
     setPickingWorkout(false)
     setPickingType(false)
   }
@@ -145,6 +149,27 @@ export default function TodayPage() {
             </button>
           )}
         </div>
+      ) : kind === 'gym' && finished ? (
+        <div className={`${CARD} space-y-3 p-6 text-center`}>
+          <div className="text-4xl" aria-hidden="true">
+            ✅
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-slate-800">{menu.workoutName ?? 'Session'} recorded</h2>
+            <p className="text-sm text-slate-500">
+              {today} · {menu.items.filter((i) => i.done).length}/{menu.items.length} done
+              {completion(menu) !== null ? ` · ${toPct(completion(menu)!)}%` : ''}
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <button onClick={() => setFinished(false)} className={`${BTN_SECONDARY} py-2 text-sm`}>
+              Edit
+            </button>
+            <button onClick={handleShare} className={`${BTN_PRIMARY} py-2 text-sm font-medium`}>
+              Share to LINE
+            </button>
+          </div>
+        </div>
       ) : kind === 'gym' ? (
         <>
           <TodayMenu
@@ -156,6 +181,7 @@ export default function TodayPage() {
             onRemove={(id) => void removeMenuItem(today, id)}
             onShare={handleShare}
             onChangeWorkout={() => setPickingType(true)}
+            onFinish={() => setFinished(true)}
           />
           <CoreBlock
             items={menu.coreItems ?? []}

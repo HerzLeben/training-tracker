@@ -133,15 +133,15 @@ function walkStreak(today: string, evalDay: (date: string) => DayEval): number {
 
 /**
  * 現在のストリーク（トレーニングした日が続いた数）。
- * done=継続 / rest・skipped・未達=途切れる / 記録なし=中立。
+ * done・partial（＝トレした日）=継続 / rest・skipped=途切れる / 記録なし=中立。
  */
 export function currentStreak(menus: DailyMenu[], today = todayISO()): number {
   const map = byDate(menus)
   return walkStreak(today, (date) => {
     const s = statusFor(date, map.get(date), today)
-    if (s === 'done') return 'achieved'
+    if (s === 'done' || s === 'partial') return 'achieved' // トレした日は継続
     if (s === 'none') return 'neutral'
-    return 'failed' // partial / rest / skipped
+    return 'failed' // rest / skipped
   })
 }
 

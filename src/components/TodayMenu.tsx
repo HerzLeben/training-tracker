@@ -15,9 +15,10 @@ interface Props {
   onRemove: (exerciseId: string) => void
   onShare: () => void
   onChangeWorkout: () => void
+  onFinish: () => void
 }
 
-export default function TodayMenu({ menu, stats, onToggle, onResult, onAdd, onRemove, onShare, onChangeWorkout }: Props) {
+export default function TodayMenu({ menu, stats, onToggle, onResult, onAdd, onRemove, onShare, onChangeWorkout, onFinish }: Props) {
   const pct = completion(menu)
   const doneCount = menu.items.filter((i) => i.done).length
 
@@ -65,11 +66,14 @@ export default function TodayMenu({ menu, stats, onToggle, onResult, onAdd, onRe
         <AddExerciseForm onAdd={onAdd} />
       </div>
 
+      <button onClick={onFinish} className={`${BTN_PRIMARY} w-full py-2.5 text-sm font-semibold`}>
+        Finish ✓
+      </button>
       <div className="grid grid-cols-2 gap-2">
         <button onClick={onChangeWorkout} className={`${BTN_SECONDARY} py-2 text-sm`}>
           Change workout
         </button>
-        <button onClick={onShare} className={`${BTN_PRIMARY} py-2 text-sm font-medium`}>
+        <button onClick={onShare} className={`${BTN_SECONDARY} py-2 text-sm`}>
           Share to LINE
         </button>
       </div>
