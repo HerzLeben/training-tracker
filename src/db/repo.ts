@@ -145,6 +145,33 @@ export async function toggleCoreItem(date: string, exerciseId: string, done: boo
   })
 }
 
+/** 指定日のセッションに自分の種目を追加する（プログラム外, added=true）。 */
+export async function addMenuItem(
+  date: string,
+  spec: { name: string; targetSets: number; targetReps: string; targetWeightKg?: number },
+): Promise<void> {
+  const item = {
+    exerciseId: `custom-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+    name: spec.name,
+    targetSets: spec.targetSets,
+    targetReps: spec.targetReps,
+    targetWeightKg: spec.targetWeightKg,
+    weightKg: spec.targetWeightKg,
+    added: true,
+    done: false,
+  }
+  await updateMenu(date, (menu) => {
+    menu.items = [...menu.items, item]
+  })
+}
+
+/** 指定日のセッションから種目を1つ削除する。 */
+export async function removeMenuItem(date: string, exerciseId: string): Promise<void> {
+  await updateMenu(date, (menu) => {
+    menu.items = menu.items.filter((it) => it.exerciseId !== exerciseId)
+  })
+}
+
 /** 指定日の種目の実績（重量・回数）を更新。 */
 export async function setItemResult(
   date: string,

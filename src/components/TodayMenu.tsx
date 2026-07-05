@@ -4,17 +4,20 @@ import { toPct } from '../lib/number'
 import { BTN_PRIMARY, BTN_SECONDARY } from '../lib/styles'
 import { daysAgoLabel, type WorkoutStats } from '../lib/history'
 import MenuItemRow from './MenuItemRow'
+import AddExerciseForm from './AddExerciseForm'
 
 interface Props {
   menu: DailyMenu
   stats?: WorkoutStats
   onToggle: (exerciseId: string, done: boolean) => void
   onResult: (exerciseId: string, patch: { weightKg?: number; reps?: number }) => void
+  onAdd: (spec: { name: string; targetSets: number; targetReps: string; targetWeightKg?: number }) => void
+  onRemove: (exerciseId: string) => void
   onShare: () => void
   onChangeWorkout: () => void
 }
 
-export default function TodayMenu({ menu, stats, onToggle, onResult, onShare, onChangeWorkout }: Props) {
+export default function TodayMenu({ menu, stats, onToggle, onResult, onAdd, onRemove, onShare, onChangeWorkout }: Props) {
   const pct = completion(menu)
   const doneCount = menu.items.filter((i) => i.done).length
 
@@ -56,8 +59,10 @@ export default function TodayMenu({ menu, stats, onToggle, onResult, onShare, on
             item={it}
             onToggle={(done) => onToggle(it.exerciseId, done)}
             onResult={(patch) => onResult(it.exerciseId, patch)}
+            onRemove={() => onRemove(it.exerciseId)}
           />
         ))}
+        <AddExerciseForm onAdd={onAdd} />
       </div>
 
       <div className="grid grid-cols-2 gap-2">

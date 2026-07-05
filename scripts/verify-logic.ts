@@ -96,6 +96,15 @@ check('共有: コア行', st.includes('Plank'))
 check('共有: 曜日(日本語)', st.includes('(土)'))
 check('共有: 達成率', st.includes('達成: 1/2 (50%)'))
 
+// 追加種目（added, 回数自由）の共有表記
+const addedSess: DailyMenu = {
+  date: '2026-07-03', type: 'gym', workoutName: 'Chest', generatedAt: 0,
+  items: [{ exerciseId: 'x', name: 'Extra Curl', targetSets: 3, targetReps: '', added: true, weightKg: 10, reps: 12, done: true }],
+}
+const at = formatSessionText(addedSess)
+check('共有: 追加種目に➕', at.includes('➕Extra Curl'))
+check('共有: 空repsは「セット」表記', at.includes('3セット'))
+
 const wt = formatWeeklyText(gapMenus, '2026-06-27')
 check('週共有: 見出し', wt.includes('週次サマリー'))
 check('週共有: 件数', wt.includes('トレーニング: 3回'))

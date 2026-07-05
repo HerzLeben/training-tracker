@@ -26,7 +26,8 @@ const TYPE_EMOJI: Record<SessionType, string> = {
 const typeOf = (m: DailyMenu): SessionType => m.type ?? 'gym'
 
 function targetText(it: MenuItem): string {
-  const base = `${it.targetSets}×${it.targetReps}`
+  const reps = it.targetReps?.trim()
+  const base = reps ? `${it.targetSets}×${reps}` : `${it.targetSets}セット`
   return it.targetWeightKg !== undefined ? `${base} @${it.targetWeightKg}kg` : base
 }
 
@@ -39,7 +40,8 @@ function actualText(it: MenuItem): string {
 
 function itemLine(it: MenuItem): string {
   const mark = it.done ? '✅' : '⬜'
-  return `${mark} ${it.name}  ${actualText(it)}  (目標 ${targetText(it)})`
+  const tag = it.added ? '➕' : ''
+  return `${mark} ${tag}${it.name}  ${actualText(it)}  (目標 ${targetText(it)})`
 }
 
 function coreLine(it: MenuItem): string {

@@ -49,6 +49,8 @@ export interface MenuItem {
   reps?: number
   /** 毎日提示の体幹種目か（プランク等）。 */
   daily?: boolean
+  /** その日に自分で追加した種目か（プログラム外）。 */
+  added?: boolean
   done: boolean
 }
 

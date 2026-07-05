@@ -5,6 +5,8 @@ import {
   toggleMenuItem,
   toggleCoreItem,
   setItemResult,
+  addMenuItem,
+  removeMenuItem,
   startSession,
   loadSampleProgram,
   markDay,
@@ -150,6 +152,8 @@ export default function TodayPage() {
             stats={menu.workoutId ? workoutStats(allMenus ?? [], menu.workoutId, today) : undefined}
             onToggle={(id, done) => void toggleMenuItem(today, id, done)}
             onResult={(id, patch) => void setItemResult(today, id, patch)}
+            onAdd={(spec) => void addMenuItem(today, spec)}
+            onRemove={(id) => void removeMenuItem(today, id)}
             onShare={handleShare}
             onChangeWorkout={() => setPickingType(true)}
           />

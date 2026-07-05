@@ -2,13 +2,14 @@ import { useEffect } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import type { SessionType } from '../types'
 import { db } from '../db/db'
-import { toggleMenuItem, toggleCoreItem, setItemResult, markDay, deleteSession } from '../db/repo'
+import { toggleMenuItem, toggleCoreItem, setItemResult, addMenuItem, removeMenuItem, markDay, deleteSession } from '../db/repo'
 import { completion } from '../lib/adherence'
 import { toPct } from '../lib/number'
 import { weekdayLabel, weekdayOf } from '../lib/date'
 import { CARD } from '../lib/styles'
 import MenuItemRow from './MenuItemRow'
 import CoreItemRow from './CoreItemRow'
+import AddExerciseForm from './AddExerciseForm'
 import DayTypePicker from './DayTypePicker'
 
 interface Props {
@@ -96,8 +97,10 @@ export default function DayDetail({ date, onClose }: Props) {
                 item={it}
                 onToggle={(done) => void toggleMenuItem(date, it.exerciseId, done)}
                 onResult={(patch) => void setItemResult(date, it.exerciseId, patch)}
+                onRemove={() => void removeMenuItem(date, it.exerciseId)}
               />
             ))}
+            <AddExerciseForm onAdd={(spec) => void addMenuItem(date, spec)} />
           </div>
         )}
         {(kind === 'personal' || kind === 'home') && (
