@@ -1,8 +1,18 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import type { SessionType } from '../types'
+import type { SessionType, Workout } from '../types'
 import { db } from '../db/db'
-import { toggleMenuItem, toggleCoreItem, setItemResult, addMenuItem, removeMenuItem, markDay, deleteSession } from '../db/repo'
+import {
+  toggleMenuItem,
+  toggleCoreItem,
+  setItemResult,
+  addMenuItem,
+  removeMenuItem,
+  markDay,
+  deleteSession,
+  startSession,
+} from '../db/repo'
+import { useWorkouts } from '../db/hooks'
 import { completion } from '../lib/adherence'
 import { toPct } from '../lib/number'
 import { weekdayLabel, weekdayOf } from '../lib/date'
@@ -28,9 +38,12 @@ const TYPE_TEXT: Record<SessionType, { emoji: string; label: string }> = {
 // 過去の（または当日の）記録を閲覧・編集・種別変更・削除するモーダル。
 export default function DayDetail({ date, onClose }: Props) {
   const menu = useLiveQuery(() => db.menus.get(date), [date])
+  const workouts = useWorkouts()
+  const [pickingWorkout, setPickingWorkout] = useState(false)
   const kind: SessionType | undefined = menu ? menu.type ?? 'gym' : undefined
   const pct = completion(menu)
   const wd = weekdayLabel(weekdayOf(date))
+  const gymLogged = kind === 'gym' && !!menu?.items.some((i) => i.done || i.reps !== undefined)
 
   useEffect(() => {
     const main = document.querySelector('main')
@@ -46,12 +59,17 @@ export default function DayDetail({ date, onClose }: Props) {
 
   const remark = async (t: SessionType) => {
     if (t === 'gym') {
-      window.alert('To log a gym session, pick a workout on the Today tab.')
+      // 過去日でも Gym を選べる。ワークアウトを選んで記録・編集する。
+      if (gymLogged && !window.confirm('Switch workout? Logged records for this day will be reset.')) return
+      setPickingWorkout(true)
       return
     }
-    const logged = kind === 'gym' && !!menu?.items.some((i) => i.done || i.reps !== undefined)
-    if (logged && !window.confirm('Change type? Logged records for this day will be cleared.')) return
+    if (gymLogged && !window.confirm('Change type? Logged records for this day will be cleared.')) return
     await markDay(date, t)
+  }
+  const pickWorkout = async (w: Workout) => {
+    await startSession(date, w)
+    setPickingWorkout(false)
   }
   const remove = async () => {
     if (window.confirm('Delete this day’s record?')) {
@@ -88,58 +106,86 @@ export default function DayDetail({ date, onClose }: Props) {
           </div>
         </div>
 
-        {/* 本体 */}
-        {kind === 'gym' && menu && menu.items.length > 0 && (
+        {pickingWorkout ? (
+          /* Gym: 過去日用のワークアウト選択 */
           <div className="space-y-2">
-            {menu.items.map((it) => (
-              <MenuItemRow
-                key={it.exerciseId}
-                item={it}
-                onToggle={(done) => void toggleMenuItem(date, it.exerciseId, done)}
-                onResult={(patch) => void setItemResult(date, it.exerciseId, patch)}
-                onRemove={() => void removeMenuItem(date, it.exerciseId)}
-              />
+            <div className="text-sm font-medium text-slate-700">Pick a workout for this day</div>
+            {(workouts ?? []).map((w) => (
+              <button
+                key={w.id}
+                onClick={() => void pickWorkout(w)}
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-left active:bg-slate-50"
+              >
+                <div className="font-medium text-slate-800">{w.name}</div>
+                <div className="text-xs text-slate-500">{w.items.length} exercises</div>
+              </button>
             ))}
-            <AddExerciseForm onAdd={(spec) => void addMenuItem(date, spec)} />
-          </div>
-        )}
-        {(kind === 'personal' || kind === 'home') && (
-          <p className="rounded-xl bg-[#e6f6f5] p-3 text-sm text-[#017a75]">
-            {TYPE_TEXT[kind].label} — done ✅
-          </p>
-        )}
-        {(kind === 'rest' || kind === 'skipped') && (
-          <p className="rounded-xl bg-slate-50 p-3 text-sm text-slate-600">{TYPE_TEXT[kind].label}</p>
-        )}
-
-        {/* コア（あれば編集可） */}
-        {menu?.coreItems && menu.coreItems.length > 0 && (
-          <div className="mt-3">
-            <div className="mb-1 text-xs font-medium text-slate-500">Core</div>
-            <div className="space-y-2">
-              {menu.coreItems.map((it) => (
-                <CoreItemRow
-                  key={it.exerciseId}
-                  item={it}
-                  onToggle={(done) => void toggleCoreItem(date, it.exerciseId, done)}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* 種別変更・削除 */}
-        <div className="mt-4 space-y-2 border-t border-slate-200 pt-3">
-          <DayTypePicker title="Set day type" current={kind} onSelect={remark} hideGym />
-          {menu && (
+            {workouts && workouts.length === 0 && (
+              <p className="text-sm text-slate-500">No program. Add one in Settings.</p>
+            )}
             <button
-              onClick={remove}
-              className="w-full rounded-xl border border-rose-200 py-2 text-sm text-rose-500 active:bg-rose-50"
+              onClick={() => setPickingWorkout(false)}
+              className="w-full rounded-xl py-2 text-sm text-slate-500 active:bg-slate-50"
             >
-              Delete this day
+              Back
             </button>
-          )}
-        </div>
+          </div>
+        ) : (
+          <>
+            {/* 本体 */}
+            {kind === 'gym' && menu && (
+              <div className="space-y-2">
+                {menu.items.map((it) => (
+                  <MenuItemRow
+                    key={it.exerciseId}
+                    item={it}
+                    onToggle={(done) => void toggleMenuItem(date, it.exerciseId, done)}
+                    onResult={(patch) => void setItemResult(date, it.exerciseId, patch)}
+                    onRemove={() => void removeMenuItem(date, it.exerciseId)}
+                  />
+                ))}
+                <AddExerciseForm onAdd={(spec) => void addMenuItem(date, spec)} />
+              </div>
+            )}
+            {(kind === 'personal' || kind === 'home') && (
+              <p className="rounded-xl bg-[#e6f6f5] p-3 text-sm text-[#017a75]">
+                {TYPE_TEXT[kind].label} — done ✅
+              </p>
+            )}
+            {(kind === 'rest' || kind === 'skipped') && (
+              <p className="rounded-xl bg-slate-50 p-3 text-sm text-slate-600">{TYPE_TEXT[kind].label}</p>
+            )}
+
+            {/* コア（あれば編集可） */}
+            {menu?.coreItems && menu.coreItems.length > 0 && (
+              <div className="mt-3">
+                <div className="mb-1 text-xs font-medium text-slate-500">Core</div>
+                <div className="space-y-2">
+                  {menu.coreItems.map((it) => (
+                    <CoreItemRow
+                      key={it.exerciseId}
+                      item={it}
+                      onToggle={(done) => void toggleCoreItem(date, it.exerciseId, done)}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 種別変更・削除（Gym も選べる） */}
+            <div className="mt-4 space-y-2 border-t border-slate-200 pt-3">
+              <DayTypePicker title="Set day type" current={kind} onSelect={remark} />
+              {menu && (
+                <button
+                  onClick={remove}
+                  className="w-full rounded-xl border border-rose-200 py-2 text-sm text-rose-500 active:bg-rose-50"
+                >
+                  Delete this day
+                </button>
+              )}
+            </div>
+          </>
+        )}
       </div>
     </div>
   )

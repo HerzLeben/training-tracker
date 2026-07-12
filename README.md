@@ -39,6 +39,11 @@ docs/           運用メモ（バックアップ手順など）
 public/         PWA アイコン・favicon
 ```
 
+## ドキュメント
+
+- 改修要件の記入先: [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md)
+- バックアップ手順: [docs/BACKUP.md](docs/BACKUP.md)
+
 ## バックアップと復元
 
 詳細は [docs/BACKUP.md](docs/BACKUP.md)。要点:
