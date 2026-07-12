@@ -16,7 +16,7 @@ import { useWorkouts } from '../db/hooks'
 import { completion } from '../lib/adherence'
 import { toPct } from '../lib/number'
 import { weekdayLabel, weekdayOf } from '../lib/date'
-import { CARD } from '../lib/styles'
+import { BTN_PRIMARY, CARD } from '../lib/styles'
 import MenuItemRow from './MenuItemRow'
 import CoreItemRow from './CoreItemRow'
 import AddExerciseForm from './AddExerciseForm'
@@ -171,6 +171,11 @@ export default function DayDetail({ date, onClose }: Props) {
                 </div>
               </div>
             )}
+
+            {/* 確定して閉じる（実績は都度自動保存済み） */}
+            <button onClick={onClose} className={`mt-3 w-full ${BTN_PRIMARY} py-2.5 text-sm font-semibold`}>
+              Done ✓
+            </button>
 
             {/* 種別変更・削除（Gym も選べる） */}
             <div className="mt-4 space-y-2 border-t border-slate-200 pt-3">
